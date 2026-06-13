@@ -1,0 +1,237 @@
+<?php
+
+class Yohzoo_TrackingDriverModuleFrontController extends ModuleFrontController
+{
+    public $auth = false;
+    public $ssl = true;
+
+    public function initContent()
+    {
+        parent::initContent();
+
+        $action = Tools::getValue('action');
+
+        if ($action === 'login') {
+            $this->ajaxLogin();
+            return;
+        }
+        if ($action === 'updateLocation') {
+            $this->ajaxUpdateLocation();
+            return;
+        }
+        if ($action === 'updateStatus') {
+            $this->ajaxUpdateStatus();
+            return;
+        }
+        if ($action === 'getDeliveries') {
+            $this->ajaxGetDeliveries();
+            return;
+        }
+
+        $this->context->smarty->assign([
+            'ajax_url' => $this->context->link->getModuleLink('yohzoo_tracking', 'driver'),
+        ]);
+
+        $this->setTemplate('module:yohzoo_tracking/views/templates/front/driver.tpl');
+    }
+
+    private function ajaxLogin()
+    {
+        header('Content-Type: application/json');
+
+        $code = pSQL(trim(Tools::getValue('code', '')));
+        if (empty($code)) {
+            die(json_encode(['success' => false, 'error' => 'Ingresa tu codigo']));
+        }
+
+        $driver = Db::getInstance()->getRow(
+            'SELECT * FROM `' . _DB_PREFIX_ . 'yohzoo_driver`
+             WHERE access_code = "' . $code . '" AND active = 1'
+        );
+
+        if (!$driver) {
+            die(json_encode(['success' => false, 'error' => 'Codigo invalido']));
+        }
+
+        $token = hash('sha256', $driver['id_driver'] . $driver['access_code'] . date('Y-m-d'));
+
+        die(json_encode([
+            'success' => true,
+            'driver' => [
+                'id' => (int) $driver['id_driver'],
+                'name' => $driver['name'],
+                'token' => $token,
+            ],
+        ]));
+    }
+
+    private function validateDriverToken()
+    {
+        $driverId = (int) Tools::getValue('driver_id');
+        $token = Tools::getValue('token', '');
+
+        if (!$driverId || empty($token)) {
+            return null;
+        }
+
+        $driver = Db::getInstance()->getRow(
+            'SELECT * FROM `' . _DB_PREFIX_ . 'yohzoo_driver`
+             WHERE id_driver = ' . $driverId . ' AND active = 1'
+        );
+
+        if (!$driver) {
+            return null;
+        }
+
+        $expectedToken = hash('sha256', $driver['id_driver'] . $driver['access_code'] . date('Y-m-d'));
+        if (!hash_equals($expectedToken, $token)) {
+            return null;
+        }
+
+        return $driver;
+    }
+
+    private function ajaxUpdateLocation()
+    {
+        header('Content-Type: application/json');
+
+        $driver = $this->validateDriverToken();
+        if (!$driver) {
+            die(json_encode(['success' => false, 'error' => 'No autorizado']));
+        }
+
+        $lat = (float) Tools::getValue('lat');
+        $lng = (float) Tools::getValue('lng');
+        $accuracy = (float) Tools::getValue('accuracy', 0);
+
+        if ($lat == 0 || $lng == 0) {
+            die(json_encode(['success' => false, 'error' => 'Ubicacion invalida']));
+        }
+
+        Db::getInstance()->insert('yohzoo_driver_location', [
+            'id_driver' => (int) $driver['id_driver'],
+            'latitude' => $lat,
+            'longitude' => $lng,
+            'accuracy' => $accuracy,
+            'date_add' => date('Y-m-d H:i:s'),
+        ]);
+
+        // Clean old locations (keep last 100)
+        Db::getInstance()->execute(
+            'DELETE FROM `' . _DB_PREFIX_ . 'yohzoo_driver_location`
+             WHERE id_driver = ' . (int) $driver['id_driver'] . '
+             AND id_location NOT IN (
+                 SELECT id_location FROM (
+                     SELECT id_location FROM `' . _DB_PREFIX_ . 'yohzoo_driver_location`
+                     WHERE id_driver = ' . (int) $driver['id_driver'] . '
+                     ORDER BY date_add DESC LIMIT 100
+                 ) tmp
+             )'
+        );
+
+        die(json_encode(['success' => true]));
+    }
+
+    private function ajaxUpdateStatus()
+    {
+        header('Content-Type: application/json');
+
+        $driver = $this->validateDriverToken();
+        if (!$driver) {
+            die(json_encode(['success' => false, 'error' => 'No autorizado']));
+        }
+
+        $idDelivery = (int) Tools::getValue('id_delivery');
+        $status = pSQL(Tools::getValue('status', ''));
+
+        $validStatuses = ['picked_up', 'on_the_way', 'nearby', 'delivered'];
+        if (!in_array($status, $validStatuses)) {
+            die(json_encode(['success' => false, 'error' => 'Estado invalido']));
+        }
+
+        $delivery = Db::getInstance()->getRow(
+            'SELECT * FROM `' . _DB_PREFIX_ . 'yohzoo_delivery`
+             WHERE id_delivery = ' . $idDelivery . '
+             AND id_driver = ' . (int) $driver['id_driver']
+        );
+
+        if (!$delivery) {
+            die(json_encode(['success' => false, 'error' => 'Entrega no encontrada']));
+        }
+
+        $updateData = [
+            'status' => $status,
+            'date_upd' => date('Y-m-d H:i:s'),
+        ];
+
+        if ($status === 'picked_up') {
+            $updateData['date_picked'] = date('Y-m-d H:i:s');
+        } elseif ($status === 'delivered') {
+            $updateData['date_delivered'] = date('Y-m-d H:i:s');
+        }
+
+        Db::getInstance()->update('yohzoo_delivery', $updateData,
+            'id_delivery = ' . $idDelivery
+        );
+
+        Db::getInstance()->insert('yohzoo_tracking_log', [
+            'id_delivery' => $idDelivery,
+            'status' => $status,
+            'message' => Yohzoo_Tracking::getStatusLabel($status),
+            'date_add' => date('Y-m-d H:i:s'),
+        ]);
+
+        if ($status === 'delivered') {
+            $order = new Order((int) $delivery['id_order']);
+            $deliveredState = Configuration::get('PS_OS_DELIVERED');
+            if ($deliveredState) {
+                $order->setCurrentState((int) $deliveredState);
+            }
+        }
+
+        die(json_encode(['success' => true, 'status_label' => Yohzoo_Tracking::getStatusLabel($status)]));
+    }
+
+    private function ajaxGetDeliveries()
+    {
+        header('Content-Type: application/json');
+
+        $driver = $this->validateDriverToken();
+        if (!$driver) {
+            die(json_encode(['success' => false, 'error' => 'No autorizado']));
+        }
+
+        $deliveries = Db::getInstance()->executeS(
+            'SELECT d.*, o.reference as order_reference
+             FROM `' . _DB_PREFIX_ . 'yohzoo_delivery` d
+             JOIN `' . _DB_PREFIX_ . 'orders` o ON d.id_order = o.id_order
+             WHERE d.id_driver = ' . (int) $driver['id_driver'] . '
+             AND d.status NOT IN ("delivered", "cancelled")
+             ORDER BY d.date_add DESC'
+        );
+
+        $result = [];
+        foreach ($deliveries as $del) {
+            $order = new Order((int) $del['id_order']);
+            $address = new Address((int) $order->id_address_delivery);
+            $customer = new Customer((int) $order->id_customer);
+
+            $result[] = [
+                'id_delivery' => (int) $del['id_delivery'],
+                'order_reference' => $del['order_reference'],
+                'tracking_code' => $del['tracking_code'],
+                'status' => $del['status'],
+                'status_label' => Yohzoo_Tracking::getStatusLabel($del['status']),
+                'customer_name' => $customer->firstname . ' ' . $customer->lastname,
+                'address' => $address->address1,
+                'address2' => $address->address2 ?: '',
+                'city' => $address->city,
+                'phone' => $address->phone ?: $address->phone_mobile,
+                'total' => Tools::displayPrice($order->total_paid, (int) $order->id_currency),
+                'estimated_minutes' => $del['estimated_minutes'],
+            ];
+        }
+
+        die(json_encode(['success' => true, 'deliveries' => $result]));
+    }
+}
