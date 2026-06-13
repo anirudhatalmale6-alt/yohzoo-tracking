@@ -99,7 +99,9 @@ class Yohzoo_TrackingTrackingModuleFrontController extends ModuleFrontController
             }
 
             $statusSteps = ['preparing', 'ready', 'assigned', 'picked_up', 'on_the_way', 'delivered'];
-            $currentStep = array_search($delivery['status'], $statusSteps);
+            $statusMap = ['nearby' => 'on_the_way'];
+            $mappedStatus = $statusMap[$delivery['status']] ?? $delivery['status'];
+            $currentStep = array_search($mappedStatus, $statusSteps);
             if ($currentStep === false) {
                 $currentStep = 0;
             }
@@ -122,7 +124,7 @@ class Yohzoo_TrackingTrackingModuleFrontController extends ModuleFrontController
                 'status_icon' => Yohzoo_Tracking::getStatusIcon($delivery['status']),
                 'current_step' => $currentStep,
                 'total_steps' => count($statusSteps),
-                'estimated_minutes' => $delivery['estimated_minutes'],
+                'estimated_minutes' => ((int) $delivery['estimated_minutes'] > 0) ? (int) $delivery['estimated_minutes'] : null,
                 'driver' => $delivery['id_driver'] ? [
                     'name' => $delivery['driver_name'] ?? '',
                 ] : null,
