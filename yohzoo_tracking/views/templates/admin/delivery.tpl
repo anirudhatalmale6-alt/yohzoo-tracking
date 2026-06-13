@@ -72,17 +72,13 @@
           <td><a href="index.php?controller=AdminOrders&id_order={$d.id_order}&vieworder&token={Tools::getAdminTokenLite('AdminOrders')}" target="_blank">#{$d.order_reference}</a></td>
           <td>{$d.customer_name}<br><small>{$d.city}</small></td>
           <td>
-            {if $d.driver_name}
-              {$d.driver_name}
-            {else}
               <select class="form-control input-sm" id="driver-select-{$d.id_delivery}" style="width:130px;">
                 <option value="">-- Asignar --</option>
                 {foreach $drivers as $dr}
-                  <option value="{$dr.id_driver}">{$dr.name}</option>
+                  <option value="{$dr.id_driver}" {if $d.id_driver == $dr.id_driver}selected{/if}>{$dr.name}</option>
                 {/foreach}
               </select>
               <button class="btn btn-xs btn-primary" onclick="assignDriver({$d.id_delivery})">OK</button>
-            {/if}
           </td>
           <td>
             <select class="form-control input-sm" onchange="updateStatus({$d.id_delivery}, this.value)" style="width:130px;">
