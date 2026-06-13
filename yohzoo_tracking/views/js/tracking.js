@@ -68,9 +68,11 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('display-tracking-code').textContent = data.tracking_code;
 
     var etaEl = document.getElementById('eta-display');
-    if (data.estimated_minutes && data.status !== 'delivered') {
+    if (data.estimated_minutes && data.estimated_minutes > 0 && data.status !== 'delivered') {
       etaEl.textContent = 'Tiempo estimado: ~' + data.estimated_minutes + ' minutos';
       etaEl.style.display = 'block';
+    } else if (data.driver_location && data.status !== 'delivered') {
+      calculateClientETA(data.driver_location, etaEl);
     } else {
       etaEl.style.display = 'none';
     }
@@ -205,6 +207,37 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function hideError() {
     errorEl.style.display = 'none';
+  }
+
+  function calculateClientETA(driverLoc, etaEl) {
+    if (!navigator.geolocation) {
+      etaEl.style.display = 'none';
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(function(pos) {
+      var custLat = pos.coords.latitude;
+      var custLng = pos.coords.longitude;
+      var distKm = haversine(driverLoc.lat, driverLoc.lng, custLat, custLng);
+      var avgSpeed = 20;
+      var etaMin = Math.ceil((distKm / avgSpeed) * 60);
+      if (etaMin < 1) etaMin = 1;
+      if (etaMin > 180) etaMin = 180;
+      etaEl.textContent = 'Tiempo estimado: ~' + etaMin + ' minutos';
+      etaEl.style.display = 'block';
+    }, function() {
+      etaEl.style.display = 'none';
+    }, { timeout: 5000 });
+  }
+
+  function haversine(lat1, lon1, lat2, lon2) {
+    var R = 6371;
+    var dLat = (lat2 - lat1) * Math.PI / 180;
+    var dLon = (lon2 - lon1) * Math.PI / 180;
+    var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
   }
 
   function escapeHtml(str) {
