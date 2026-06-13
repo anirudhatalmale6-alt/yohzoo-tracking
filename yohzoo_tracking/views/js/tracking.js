@@ -93,7 +93,13 @@ document.addEventListener('DOMContentLoaded', function() {
     var driverEl = document.getElementById('tracking-driver');
     if (data.driver) {
       driverEl.style.display = 'block';
-      document.getElementById('driver-name').textContent = data.driver.name;
+      var driverInfo = data.driver.name;
+      document.getElementById('driver-name').textContent = driverInfo;
+      var phoneEl = document.getElementById('driver-phone');
+      if (phoneEl && data.driver.phone) {
+        phoneEl.innerHTML = '<a href="tel:' + escapeHtml(data.driver.phone) + '" style="color:#667eea;text-decoration:none;">&#128222; ' + escapeHtml(data.driver.phone) + '</a>';
+        phoneEl.style.display = 'block';
+      }
     } else {
       driverEl.style.display = 'none';
     }
@@ -107,7 +113,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     renderTimeline(data.timeline);
-    renderProducts(data.products);
+    renderProducts(data.products, data.order_total);
   }
 
   function renderMap(location) {
@@ -157,7 +163,7 @@ document.addEventListener('DOMContentLoaded', function() {
     container.innerHTML = html;
   }
 
-  function renderProducts(products) {
+  function renderProducts(products, orderTotal) {
     var container = document.getElementById('products-list');
     if (!products || !products.length) {
       container.innerHTML = '<p style="color:#a0aec0;font-size:14px;">Sin productos</p>';
@@ -171,8 +177,16 @@ document.addEventListener('DOMContentLoaded', function() {
         html += '<img src="' + escapeHtml(p.image) + '" alt="' + escapeHtml(p.name) + '">';
       }
       html += '<div><p class="product-name">' + escapeHtml(p.name) + '</p>'
-        + '<p class="product-qty">Cantidad: ' + p.quantity + '</p></div></div>';
+        + '<p class="product-qty">Cantidad: ' + p.quantity + '</p>';
+      if (p.price) {
+        html += '<p class="product-qty" style="color:#2d3748;font-weight:600;">' + escapeHtml(p.price) + '</p>';
+      }
+      html += '</div></div>';
     });
+    if (orderTotal) {
+      html += '<div style="text-align:right;padding:10px 0;border-top:2px solid #e2e8f0;margin-top:8px;">'
+        + '<strong style="font-size:16px;color:#2d3748;">Total: ' + escapeHtml(orderTotal) + '</strong></div>';
+    }
     container.innerHTML = html;
   }
 

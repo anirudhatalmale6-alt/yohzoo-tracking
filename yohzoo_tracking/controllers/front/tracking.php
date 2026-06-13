@@ -83,6 +83,7 @@ class Yohzoo_TrackingTrackingModuleFrontController extends ModuleFrontController
                         $productList[] = [
                             'name' => $p['product_name'] ?? 'Producto',
                             'quantity' => (int) ($p['product_quantity'] ?? 1),
+                            'price' => Tools::displayPrice((float) ($p['total_price_tax_incl'] ?? $p['product_price'] ?? 0), (int) $order->id_currency),
                             'image' => $imgUrl,
                         ];
                     }
@@ -118,8 +119,10 @@ class Yohzoo_TrackingTrackingModuleFrontController extends ModuleFrontController
                 'current_step' => $currentStep,
                 'total_steps' => count($statusSteps),
                 'estimated_minutes' => $this->calculateETA($delivery, $driverLocation, $address),
+                'order_total' => Tools::displayPrice((float) $order->total_paid, (int) $order->id_currency),
                 'driver' => $delivery['id_driver'] ? [
                     'name' => $delivery['driver_name'] ?? '',
+                    'phone' => $delivery['driver_phone'] ?? '',
                 ] : null,
                 'delivery_address' => [
                     'city' => $address->city ?? '',

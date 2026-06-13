@@ -87,6 +87,7 @@
             <div class="driver-avatar">&#128666;</div>
             <div>
               <p class="driver-name" id="driver-name"></p>
+              <p class="driver-phone" id="driver-phone" style="display:none;margin:4px 0 0;font-size:14px;"></p>
             </div>
           </div>
         </div>
