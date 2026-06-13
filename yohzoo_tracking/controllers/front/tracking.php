@@ -120,14 +120,29 @@ class Yohzoo_TrackingTrackingModuleFrontController extends ModuleFrontController
 
     private function getProductImageUrl($product)
     {
-        $id_image = $product['image']->id ?? ($product['id_image'] ?? null);
-        if (!$id_image) {
+        $idProduct = (int) $product['product_id'];
+        $idImage = 0;
+
+        if (!empty($product['image']) && is_object($product['image'])) {
+            $idImage = (int) $product['image']->id;
+        } elseif (!empty($product['id_image'])) {
+            $idImage = (int) $product['id_image'];
+        }
+
+        if (!$idImage) {
+            $cover = Image::getCover($idProduct);
+            if ($cover) {
+                $idImage = (int) $cover['id_image'];
+            }
+        }
+
+        if (!$idImage) {
             return '';
         }
-        $image = new Image($id_image);
+
         return $this->context->link->getImageLink(
             $product['link_rewrite'] ?? 'product',
-            $image->getExistingImgPath(),
+            $idProduct . '-' . $idImage,
             'small_default'
         );
     }
