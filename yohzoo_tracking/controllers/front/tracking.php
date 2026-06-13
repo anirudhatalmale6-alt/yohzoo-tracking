@@ -124,7 +124,7 @@ class Yohzoo_TrackingTrackingModuleFrontController extends ModuleFrontController
                 'status_icon' => Yohzoo_Tracking::getStatusIcon($delivery['status']),
                 'current_step' => $currentStep,
                 'total_steps' => count($statusSteps),
-                'estimated_minutes' => ((int) $delivery['estimated_minutes'] > 0) ? (int) $delivery['estimated_minutes'] : null,
+                'estimated_minutes' => $this->calculateETA($delivery, $driverLocation, $address),
                 'driver' => $delivery['id_driver'] ? [
                     'name' => $delivery['driver_name'] ?? '',
                 ] : null,
@@ -145,6 +145,89 @@ class Yohzoo_TrackingTrackingModuleFrontController extends ModuleFrontController
         } catch (\Exception $e) {
             die(json_encode(['success' => false, 'error' => 'Error: ' . $e->getMessage()]));
         }
+    }
+
+    private function calculateETA($delivery, $driverLocation, $address)
+    {
+        $manual = (int) ($delivery['estimated_minutes'] ?? 0);
+        if ($manual > 0) {
+            return $manual;
+        }
+
+        if (!$driverLocation || !in_array($delivery['status'], ['picked_up', 'on_the_way', 'nearby'])) {
+            return null;
+        }
+
+        $driverLat = (float) $driverLocation['latitude'];
+        $driverLng = (float) $driverLocation['longitude'];
+
+        if ($driverLat == 0 || $driverLng == 0) {
+            return null;
+        }
+
+        $destLat = null;
+        $destLng = null;
+
+        try {
+            $fullAddress = trim(($address->address1 ?? '') . ', ' . ($address->city ?? '') . ', Peru');
+            $cacheKey = 'yohzoo_geo_' . md5($fullAddress);
+            $cached = Configuration::get($cacheKey);
+
+            if ($cached) {
+                $coords = explode(',', $cached);
+                if (count($coords) === 2) {
+                    $destLat = (float) $coords[0];
+                    $destLng = (float) $coords[1];
+                }
+            }
+
+            if (!$destLat) {
+                $url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' . urlencode($fullAddress);
+                $opts = ['http' => ['header' => "User-Agent: YohzooPets/1.0\r\n", 'timeout' => 3]];
+                $ctx = stream_context_create($opts);
+                $result = @file_get_contents($url, false, $ctx);
+
+                if ($result) {
+                    $data = json_decode($result, true);
+                    if (!empty($data[0]['lat']) && !empty($data[0]['lon'])) {
+                        $destLat = (float) $data[0]['lat'];
+                        $destLng = (float) $data[0]['lon'];
+                        Configuration::updateValue($cacheKey, $destLat . ',' . $destLng);
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            return null;
+        }
+
+        if (!$destLat || !$destLng) {
+            return null;
+        }
+
+        $distanceKm = $this->haversineDistance($driverLat, $driverLng, $destLat, $destLng);
+        $avgSpeedKmH = 20;
+        $eta = (int) ceil(($distanceKm / $avgSpeedKmH) * 60);
+
+        if ($eta < 1) {
+            $eta = 1;
+        }
+        if ($eta > 180) {
+            $eta = 180;
+        }
+
+        return $eta;
+    }
+
+    private function haversineDistance($lat1, $lon1, $lat2, $lon2)
+    {
+        $earthRadius = 6371;
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
+        $a = sin($dLat / 2) * sin($dLat / 2) +
+             cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+             sin($dLon / 2) * sin($dLon / 2);
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+        return $earthRadius * $c;
     }
 
     private function getProductImageUrl($product)
