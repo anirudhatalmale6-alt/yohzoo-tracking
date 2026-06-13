@@ -4,6 +4,12 @@
   Seguir tu Pedido
 {/block}
 
+{block name='head'}
+  {$smarty.block.parent}
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="{$urls.base_url}modules/yohzoo_tracking/views/css/tracking.css">
+{/block}
+
 {block name='page_content'}
 <div id="yohzoo-tracking-app">
 
@@ -103,10 +109,12 @@
 
 </div>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 var yohzooTrackingConfig = {
   ajaxUrl: '{$ajax_url nofilter}',
   refreshInterval: 10000
 };
 </script>
+<script src="{$urls.base_url}modules/yohzoo_tracking/views/js/tracking.js"></script>
 {/block}
