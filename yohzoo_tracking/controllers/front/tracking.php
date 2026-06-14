@@ -147,6 +147,12 @@ class Yohzoo_TrackingTrackingModuleFrontController extends ModuleFrontController
     {
         $manual = (int) ($delivery['estimated_minutes'] ?? 0);
         if ($manual > 0) {
+            $refTime = $delivery['date_picked'] ?: $delivery['date_assigned'];
+            if ($refTime) {
+                $elapsed = (time() - strtotime($refTime)) / 60;
+                $remaining = (int) max(1, $manual - $elapsed);
+                return $remaining;
+            }
             return $manual;
         }
         return null;

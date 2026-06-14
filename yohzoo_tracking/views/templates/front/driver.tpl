@@ -47,6 +47,9 @@
   .no-deliveries p { font-size: 48px; margin: 0 0 12px; }
 
   .driver-logout { display: block; width: 100%; padding: 12px; background: none; border: 2px solid #e2e8f0; border-radius: 10px; color: #718096; font-size: 14px; cursor: pointer; margin-top: 16px; }
+
+  #driver-live-map { height: 200px; border-radius: 12px; margin-bottom: 16px; border: 1px solid #e2e8f0; display: none; }
+  .map-label { font-size: 12px; color: #718096; text-align: center; margin: -8px 0 12px; }
 </style>
 
 <div id="driver-app">
@@ -65,6 +68,9 @@
       <span class="gps-status gps-off" id="gps-status">GPS OFF</span>
     </div>
 
+    <div id="driver-live-map"></div>
+    <p class="map-label" id="map-label" style="display:none;">Tu ubicacion en tiempo real</p>
+
     <div id="deliveries-list"></div>
 
     <button class="driver-logout" id="driver-logout-btn">Cerrar sesion</button>
@@ -72,6 +78,8 @@
 
 </div>
 
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 (function() {
   var AJAX_URL = '{$ajax_url nofilter}';
@@ -79,6 +87,7 @@
   var gpsWatchId = null;
   var locationInterval = null;
   var lastLat = null, lastLng = null, lastAccuracy = null;
+  var driverMap = null, driverMapMarker = null, driverMapReady = false;
 
   var loginScreen = document.getElementById('driver-login-screen');
   var dashboard = document.getElementById('driver-dashboard');
@@ -148,6 +157,7 @@
         lastLng = pos.coords.longitude;
         lastAccuracy = pos.coords.accuracy;
         updateGPSStatus(true);
+        updateDriverMap(lastLat, lastLng);
       },
       function() { updateGPSStatus(false); },
       { enableHighAccuracy: true, maximumAge: 5000 }
@@ -222,7 +232,7 @@
       if (d.phone) {
         html += '<button class="btn-call" onclick="window.location.href=\'tel:' + esc(d.phone) + '\'">Llamar</button>';
         var addr = encodeURIComponent(d.address + ', ' + d.city + ', Peru');
-        html += '<button class="btn-navigate" onclick="window.open(\'https://www.google.com/maps/search/?api=1&query=' + addr + '\')">Navegar</button>';
+        html += '<button class="btn-navigate" onclick="window.open(\'https://www.google.com/maps/dir/?api=1&destination=' + addr + '\')">Navegar</button>';
       }
 
       if (d.status === 'assigned' || d.status === 'ready') {
@@ -267,6 +277,30 @@
       })
       .catch(function() { alert('Error de conexion'); });
   };
+
+  function updateDriverMap(lat, lng) {
+    var mapEl = document.getElementById('driver-live-map');
+    var labelEl = document.getElementById('map-label');
+    if (!driverMapReady) {
+      mapEl.style.display = 'block';
+      labelEl.style.display = 'block';
+      driverMap = L.map('driver-live-map').setView([lat, lng], 15);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OSM'
+      }).addTo(driverMap);
+      var icon = L.divIcon({
+        className: '',
+        html: '<div style="background:#667eea;color:#fff;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 8px rgba(0,0,0,0.3);border:3px solid #fff;">&#128666;</div>',
+        iconSize: [36, 36],
+        iconAnchor: [18, 18]
+      });
+      driverMapMarker = L.marker([lat, lng], { icon: icon }).addTo(driverMap);
+      driverMapReady = true;
+    } else {
+      driverMapMarker.setLatLng([lat, lng]);
+      driverMap.panTo([lat, lng]);
+    }
+  }
 
   function esc(str) {
     if (!str) return '';
