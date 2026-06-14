@@ -98,6 +98,9 @@
             <a href="{$tracking_url}?code={$d.tracking_code}" target="_blank" class="btn btn-xs btn-info" title="Ver tracking">
               <i class="icon-eye-open"></i>
             </a>
+            <button class="btn btn-xs btn-danger" onclick="deleteDelivery({$d.id_delivery}, '{$d.tracking_code}')" title="Eliminar">
+              <i class="icon-trash"></i>
+            </button>
           </td>
         </tr>
         {/foreach}
@@ -237,6 +240,17 @@ function createDriver() {
       } else {
         alert(data.error);
       }
+    });
+}
+
+function deleteDelivery(idDelivery, trackingCode) {
+  if (!confirm('Eliminar entrega ' + trackingCode + '? Esta accion no se puede deshacer.')) return;
+
+  fetch(adminLink + '&action=deleteDelivery&id_delivery=' + idDelivery + '&ajax=1')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.success) location.reload();
+      else alert(data.error);
     });
 }
 

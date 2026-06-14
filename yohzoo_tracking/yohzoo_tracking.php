@@ -29,7 +29,8 @@ class Yohzoo_Tracking extends Module
             && $this->installTab()
             && $this->registerHook('displayHeader')
             && $this->registerHook('displayAdminOrder')
-            && $this->registerHook('actionOrderStatusPostUpdate');
+            && $this->registerHook('actionOrderStatusPostUpdate')
+            && $this->registerHook('actionValidateOrder');
     }
 
     public function uninstall()
@@ -200,28 +201,61 @@ class Yohzoo_Tracking extends Module
         return $this->display(__FILE__, 'views/templates/admin/order_panel.tpl');
     }
 
+    public function hookActionValidateOrder($params)
+    {
+        $order = $params['order'];
+        $idOrder = (int) $order->id;
+
+        $existing = Db::getInstance()->getRow(
+            'SELECT * FROM `' . _DB_PREFIX_ . 'yohzoo_delivery` WHERE id_order = ' . $idOrder
+        );
+
+        if (!$existing) {
+            $trackingCode = strtoupper($order->reference);
+
+            Db::getInstance()->insert('yohzoo_delivery', [
+                'id_order' => $idOrder,
+                'tracking_code' => $trackingCode,
+                'status' => 'preparing',
+                'date_add' => date('Y-m-d H:i:s'),
+                'date_upd' => date('Y-m-d H:i:s'),
+            ]);
+
+            Db::getInstance()->insert('yohzoo_tracking_log', [
+                'id_delivery' => (int) Db::getInstance()->Insert_ID(),
+                'status' => 'preparing',
+                'message' => 'Pedido registrado automaticamente para entrega',
+                'date_add' => date('Y-m-d H:i:s'),
+            ]);
+        }
+    }
+
     public function hookActionOrderStatusPostUpdate($params)
     {
         $idOrder = (int) $params['id_order'];
-        $newStatus = $params['newOrderStatus'];
 
-        if ($newStatus->id == Configuration::get('PS_OS_SHIPPING')) {
-            $delivery = Db::getInstance()->getRow(
-                'SELECT * FROM `' . _DB_PREFIX_ . 'yohzoo_delivery` WHERE id_order = ' . $idOrder
-            );
+        $existing = Db::getInstance()->getRow(
+            'SELECT * FROM `' . _DB_PREFIX_ . 'yohzoo_delivery` WHERE id_order = ' . $idOrder
+        );
 
-            if (!$delivery) {
-                $order = new Order($idOrder);
-                $trackingCode = strtoupper($order->reference);
+        if (!$existing) {
+            $order = new Order($idOrder);
+            $trackingCode = strtoupper($order->reference);
 
-                Db::getInstance()->insert('yohzoo_delivery', [
-                    'id_order' => $idOrder,
-                    'tracking_code' => $trackingCode,
-                    'status' => 'preparing',
-                    'date_add' => date('Y-m-d H:i:s'),
-                    'date_upd' => date('Y-m-d H:i:s'),
-                ]);
-            }
+            Db::getInstance()->insert('yohzoo_delivery', [
+                'id_order' => $idOrder,
+                'tracking_code' => $trackingCode,
+                'status' => 'preparing',
+                'date_add' => date('Y-m-d H:i:s'),
+                'date_upd' => date('Y-m-d H:i:s'),
+            ]);
+
+            Db::getInstance()->insert('yohzoo_tracking_log', [
+                'id_delivery' => (int) Db::getInstance()->Insert_ID(),
+                'status' => 'preparing',
+                'message' => 'Pedido registrado para entrega',
+                'date_add' => date('Y-m-d H:i:s'),
+            ]);
         }
     }
 

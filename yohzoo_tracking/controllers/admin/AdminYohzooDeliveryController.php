@@ -36,6 +36,9 @@ class AdminYohzooDeliveryController extends ModuleAdminController
             case 'deleteDriver':
                 $this->ajaxDeleteDriver();
                 return;
+            case 'deleteDelivery':
+                $this->ajaxDeleteDelivery();
+                return;
             case 'getMapData':
                 $this->ajaxGetMapData();
                 return;
@@ -282,6 +285,26 @@ class AdminYohzooDeliveryController extends ModuleAdminController
 
         Db::getInstance()->update('yohzoo_driver', ['active' => 0, 'date_upd' => date('Y-m-d H:i:s')],
             'id_driver = ' . $idDriver
+        );
+
+        die(json_encode(['success' => true]));
+    }
+
+    private function ajaxDeleteDelivery()
+    {
+        header('Content-Type: application/json');
+
+        $idDelivery = (int) Tools::getValue('id_delivery');
+        if (!$idDelivery) {
+            die(json_encode(['success' => false, 'error' => 'Delivery ID required']));
+        }
+
+        Db::getInstance()->execute(
+            'DELETE FROM `' . _DB_PREFIX_ . 'yohzoo_tracking_log` WHERE id_delivery = ' . $idDelivery
+        );
+
+        Db::getInstance()->execute(
+            'DELETE FROM `' . _DB_PREFIX_ . 'yohzoo_delivery` WHERE id_delivery = ' . $idDelivery
         );
 
         die(json_encode(['success' => true]));
