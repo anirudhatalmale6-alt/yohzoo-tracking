@@ -7,7 +7,7 @@
 {block name='head'}
   {$smarty.block.parent}
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="{$urls.base_url}modules/yohzoo_tracking/views/css/tracking.css">
+  <link rel="stylesheet" href="{$urls.base_url}modules/yohzoo_tracking/views/css/tracking.css?v=2">
 {/block}
 
 {block name='page_content'}
@@ -117,5 +117,5 @@ var yohzooTrackingConfig = {
   refreshInterval: 10000
 };
 </script>
-<script src="{$urls.base_url}modules/yohzoo_tracking/views/js/tracking.js"></script>
+<script src="{$urls.base_url}modules/yohzoo_tracking/views/js/tracking.js?v=2"></script>
 {/block}

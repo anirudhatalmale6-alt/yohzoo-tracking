@@ -190,7 +190,11 @@
       + '&lat=' + lastLat + '&lng=' + lastLng + '&accuracy=' + lastAccuracy
       + '&_t=' + Date.now();
 
-    fetch(AJAX_URL + '?' + params).catch(function() {});
+    fetch(AJAX_URL, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: params
+    }).catch(function() {});
   }
 
   function updateGPSStatus(on) {
@@ -202,7 +206,11 @@
   function loadDeliveries() {
     if (!driverData) return;
 
-    fetch(AJAX_URL + '?action=getDeliveries&driver_id=' + driverData.id + '&token=' + encodeURIComponent(driverData.token) + '&_t=' + Date.now())
+    fetch(AJAX_URL, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: 'action=getDeliveries&driver_id=' + driverData.id + '&token=' + encodeURIComponent(driverData.token) + '&_t=' + Date.now()
+    })
       .then(function(r) { return r.json(); })
       .then(function(data) {
         if (data.success) renderDeliveries(data.deliveries);
@@ -270,7 +278,11 @@
       + '&id_delivery=' + idDelivery + '&status=' + status
       + '&_t=' + Date.now();
 
-    fetch(AJAX_URL + '?' + params)
+    fetch(AJAX_URL, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: params
+    })
       .then(function(r) { return r.json(); })
       .then(function(data) {
         if (data.success) {
