@@ -13,6 +13,9 @@ class Yohzoo_TrackingTrackingModuleFrontController extends ModuleFrontController
             return;
         }
 
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
+
         $trackingCode = Tools::getValue('code', '');
 
         $this->context->smarty->assign([

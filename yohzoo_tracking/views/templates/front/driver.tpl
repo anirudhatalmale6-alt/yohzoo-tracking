@@ -70,6 +70,7 @@
 
     <div id="driver-live-map"></div>
     <p class="map-label" id="map-label" style="display:none;">Tu ubicacion en tiempo real</p>
+    <p id="gps-last-sent" style="display:none;font-size:11px;color:#48bb78;text-align:center;margin:-6px 0 10px;">Ultima actualizacion: --</p>
 
     <div id="deliveries-list"></div>
 
@@ -111,7 +112,11 @@
     var code = document.getElementById('driver-code').value.trim();
     if (!code) return;
 
-    fetch(AJAX_URL + '?action=login&code=' + encodeURIComponent(code) + '&_t=' + Date.now())
+    fetch(AJAX_URL, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: 'action=login&code=' + encodeURIComponent(code) + '&_t=' + Date.now()
+    })
       .then(function(r) { return r.json(); })
       .then(function(data) {
         if (!data.success) {
@@ -194,7 +199,24 @@
       method: 'POST',
       headers: {'Content-Type': 'application/x-www-form-urlencoded'},
       body: params
-    }).catch(function() {});
+    }).then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.success) {
+        var el = document.getElementById('gps-last-sent');
+        if (el) {
+          el.style.display = 'block';
+          el.textContent = 'GPS enviado: ' + new Date().toLocaleTimeString('es-PE');
+          el.style.color = '#48bb78';
+        }
+      }
+    }).catch(function() {
+      var el = document.getElementById('gps-last-sent');
+      if (el) {
+        el.style.display = 'block';
+        el.textContent = 'Error enviando GPS';
+        el.style.color = '#e53e3e';
+      }
+    });
   }
 
   function updateGPSStatus(on) {

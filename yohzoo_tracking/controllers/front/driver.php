@@ -28,6 +28,9 @@ class Yohzoo_TrackingDriverModuleFrontController extends ModuleFrontController
             return;
         }
 
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
+
         $this->context->smarty->assign([
             'ajax_url' => $this->context->link->getModuleLink('yohzoo_tracking', 'driver'),
         ]);

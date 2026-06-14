@@ -143,8 +143,7 @@ document.addEventListener('DOMContentLoaded', function() {
     map.panTo([location.lat, location.lng]);
 
     var updatedEl = document.getElementById('map-updated');
-    var d = new Date(location.updated.replace(' ', 'T'));
-    updatedEl.textContent = 'Actualizado: ' + d.toLocaleTimeString('es-PE');
+    updatedEl.textContent = 'Actualizado: ' + new Date().toLocaleTimeString('es-PE');
   }
 
   function renderTimeline(timeline) {
