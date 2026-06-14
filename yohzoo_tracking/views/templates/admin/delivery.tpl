@@ -222,7 +222,14 @@ function updateStatus(idDelivery, status) {
   fetch(adminLink + '&action=updateStatus&id_delivery=' + idDelivery + '&status=' + status + '&ajax=1')
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      if (!data.success) alert(data.error);
+      if (data.success) {
+        if (data.whatsapp_url && confirm('Entrega marcada como entregada! Enviar WhatsApp al cliente?')) {
+          window.open(data.whatsapp_url, '_blank');
+        }
+        if (status === 'delivered') location.reload();
+      } else {
+        alert(data.error);
+      }
     });
 }
 

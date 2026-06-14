@@ -239,7 +239,36 @@ class AdminYohzooDeliveryController extends ModuleAdminController
             'date_add' => date('Y-m-d H:i:s'),
         ]);
 
-        die(json_encode(['success' => true]));
+        $whatsappUrl = null;
+        if ($status === 'delivered') {
+            $delivery = Db::getInstance()->getRow(
+                'SELECT d.*, o.id_customer, o.id_address_delivery
+                 FROM `' . _DB_PREFIX_ . 'yohzoo_delivery` d
+                 JOIN `' . _DB_PREFIX_ . 'orders` o ON d.id_order = o.id_order
+                 WHERE d.id_delivery = ' . $idDelivery
+            );
+
+            if ($delivery) {
+                $order = new Order((int) $delivery['id_order']);
+                $deliveredState = Configuration::get('PS_OS_DELIVERED');
+                if ($deliveredState) {
+                    $order->setCurrentState((int) $deliveredState);
+                }
+
+                $address = new Address((int) $delivery['id_address_delivery']);
+                $phone = $address->phone_mobile ?: $address->phone;
+                if ($phone) {
+                    $phone = preg_replace('/[^0-9]/', '', $phone);
+                    if (strlen($phone) === 9) {
+                        $phone = '51' . $phone;
+                    }
+                    $msg = urlencode("Hola! Tu pedido de Yohzoo Pets ha sido entregado. Gracias por tu compra! Si tienes alguna pregunta o duda, escribenos aqui.");
+                    $whatsappUrl = 'https://wa.me/' . $phone . '?text=' . $msg;
+                }
+            }
+        }
+
+        die(json_encode(['success' => true, 'whatsapp_url' => $whatsappUrl]));
     }
 
     private function ajaxCreateDriver()
