@@ -74,9 +74,9 @@
           <td>{$d.customer_name}</td>
           <td>
             <small>
+              {if $d.state_name}{$d.state_name}<br>{/if}
               {$d.address1}
               {if $d.address2}<br>{$d.address2}{/if}
-              {if $d.state_name}<br>{$d.state_name}{/if}
             </small>
           </td>
           <td>
