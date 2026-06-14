@@ -88,6 +88,7 @@
   var locationInterval = null;
   var lastLat = null, lastLng = null, lastAccuracy = null;
   var driverMap = null, driverMapMarker = null, driverMapReady = false;
+  var lastSendTime = 0;
 
   var loginScreen = document.getElementById('driver-login-screen');
   var dashboard = document.getElementById('driver-dashboard');
@@ -110,7 +111,7 @@
     var code = document.getElementById('driver-code').value.trim();
     if (!code) return;
 
-    fetch(AJAX_URL + '?action=login&code=' + encodeURIComponent(code))
+    fetch(AJAX_URL + '?action=login&code=' + encodeURIComponent(code) + '&_t=' + Date.now())
       .then(function(r) { return r.json(); })
       .then(function(data) {
         if (!data.success) {
@@ -158,12 +159,13 @@
         lastAccuracy = pos.coords.accuracy;
         updateGPSStatus(true);
         updateDriverMap(lastLat, lastLng);
+        sendLocation();
       },
       function() { updateGPSStatus(false); },
       { enableHighAccuracy: true, maximumAge: 5000 }
     );
 
-    locationInterval = setInterval(sendLocation, 15000);
+    locationInterval = setInterval(sendLocation, 10000);
   }
 
   function stopGPS() {
@@ -179,10 +181,14 @@
 
   function sendLocation() {
     if (!lastLat || !driverData) return;
+    var now = Date.now();
+    if (now - lastSendTime < 8000) return;
+    lastSendTime = now;
 
     var params = 'action=updateLocation&driver_id=' + driverData.id
       + '&token=' + encodeURIComponent(driverData.token)
-      + '&lat=' + lastLat + '&lng=' + lastLng + '&accuracy=' + lastAccuracy;
+      + '&lat=' + lastLat + '&lng=' + lastLng + '&accuracy=' + lastAccuracy
+      + '&_t=' + Date.now();
 
     fetch(AJAX_URL + '?' + params).catch(function() {});
   }
@@ -196,7 +202,7 @@
   function loadDeliveries() {
     if (!driverData) return;
 
-    fetch(AJAX_URL + '?action=getDeliveries&driver_id=' + driverData.id + '&token=' + encodeURIComponent(driverData.token))
+    fetch(AJAX_URL + '?action=getDeliveries&driver_id=' + driverData.id + '&token=' + encodeURIComponent(driverData.token) + '&_t=' + Date.now())
       .then(function(r) { return r.json(); })
       .then(function(data) {
         if (data.success) renderDeliveries(data.deliveries);
@@ -261,7 +267,8 @@
 
     var params = 'action=updateStatus&driver_id=' + driverData.id
       + '&token=' + encodeURIComponent(driverData.token)
-      + '&id_delivery=' + idDelivery + '&status=' + status;
+      + '&id_delivery=' + idDelivery + '&status=' + status
+      + '&_t=' + Date.now();
 
     fetch(AJAX_URL + '?' + params)
       .then(function(r) { return r.json(); })

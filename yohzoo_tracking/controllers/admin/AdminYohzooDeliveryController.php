@@ -114,6 +114,8 @@ class AdminYohzooDeliveryController extends ModuleAdminController
     private function ajaxCreateDelivery()
     {
         header('Content-Type: application/json');
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
 
         $idOrder = (int) Tools::getValue('id_order');
         if (!$idOrder) {
@@ -156,6 +158,8 @@ class AdminYohzooDeliveryController extends ModuleAdminController
     private function ajaxAssignDriver()
     {
         header('Content-Type: application/json');
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
 
         $idDelivery = (int) Tools::getValue('id_delivery');
         $idDriver = (int) Tools::getValue('id_driver');
@@ -214,6 +218,8 @@ class AdminYohzooDeliveryController extends ModuleAdminController
     private function ajaxUpdateDeliveryStatus()
     {
         header('Content-Type: application/json');
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
 
         $idDelivery = (int) Tools::getValue('id_delivery');
         $status = pSQL(Tools::getValue('status', ''));
@@ -276,6 +282,8 @@ class AdminYohzooDeliveryController extends ModuleAdminController
     private function ajaxCreateDriver()
     {
         header('Content-Type: application/json');
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
 
         $name = pSQL(trim(Tools::getValue('driver_name', '')));
         $phone = pSQL(trim(Tools::getValue('driver_phone', '')));
@@ -308,6 +316,8 @@ class AdminYohzooDeliveryController extends ModuleAdminController
     private function ajaxDeleteDriver()
     {
         header('Content-Type: application/json');
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
 
         $idDriver = (int) Tools::getValue('id_driver');
         if (!$idDriver) {
@@ -324,6 +334,8 @@ class AdminYohzooDeliveryController extends ModuleAdminController
     private function ajaxDeleteDelivery()
     {
         header('Content-Type: application/json');
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
 
         $idDelivery = (int) Tools::getValue('id_delivery');
         if (!$idDelivery) {
@@ -344,6 +356,8 @@ class AdminYohzooDeliveryController extends ModuleAdminController
     private function ajaxGetMapData()
     {
         header('Content-Type: application/json');
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
 
         $activeDeliveries = Db::getInstance()->executeS(
             'SELECT d.id_delivery, d.tracking_code, d.status, dr.name as driver_name,

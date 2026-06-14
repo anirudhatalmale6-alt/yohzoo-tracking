@@ -38,6 +38,8 @@ class Yohzoo_TrackingDriverModuleFrontController extends ModuleFrontController
     private function ajaxLogin()
     {
         header('Content-Type: application/json');
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
 
         $code = pSQL(trim(Tools::getValue('code', '')));
         if (empty($code)) {
@@ -94,6 +96,8 @@ class Yohzoo_TrackingDriverModuleFrontController extends ModuleFrontController
     private function ajaxUpdateLocation()
     {
         header('Content-Type: application/json');
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
 
         $driver = $this->validateDriverToken();
         if (!$driver) {
@@ -135,6 +139,8 @@ class Yohzoo_TrackingDriverModuleFrontController extends ModuleFrontController
     private function ajaxUpdateStatus()
     {
         header('Content-Type: application/json');
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
 
         $driver = $this->validateDriverToken();
         if (!$driver) {
@@ -207,6 +213,8 @@ class Yohzoo_TrackingDriverModuleFrontController extends ModuleFrontController
     private function ajaxGetDeliveries()
     {
         header('Content-Type: application/json');
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
 
         $driver = $this->validateDriverToken();
         if (!$driver) {

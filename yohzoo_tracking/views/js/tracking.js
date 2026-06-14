@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
     submitBtn.disabled = true;
     hideError();
 
-    fetch(config.ajaxUrl + '?action=getStatus&code=' + encodeURIComponent(code))
+    fetch(config.ajaxUrl + '?action=getStatus&code=' + encodeURIComponent(code) + '&_t=' + Date.now())
       .then(function(r) { return r.json(); })
       .then(function(data) {
         submitBtn.querySelector('.btn-text').style.display = 'inline';
@@ -193,7 +193,7 @@ document.addEventListener('DOMContentLoaded', function() {
   function startRefresh(code) {
     stopRefresh();
     refreshTimer = setInterval(function() {
-      fetch(config.ajaxUrl + '?action=getStatus&code=' + encodeURIComponent(code))
+      fetch(config.ajaxUrl + '?action=getStatus&code=' + encodeURIComponent(code) + '&_t=' + Date.now())
         .then(function(r) { return r.json(); })
         .then(function(data) {
           if (data.success) {
