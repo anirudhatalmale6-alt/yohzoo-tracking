@@ -76,7 +76,7 @@
             <small>
               {$d.address1}
               {if $d.address2}<br>{$d.address2}{/if}
-              <br>{$d.city}{if $d.postcode}, {$d.postcode}{/if}
+              {if $d.state_name}<br>{$d.state_name}{/if}
             </small>
           </td>
           <td>
