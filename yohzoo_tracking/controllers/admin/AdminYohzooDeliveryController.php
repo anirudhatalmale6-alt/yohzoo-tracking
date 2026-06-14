@@ -49,7 +49,7 @@ class AdminYohzooDeliveryController extends ModuleAdminController
         $deliveries = Db::getInstance()->executeS(
             'SELECT d.*, o.reference as order_reference, dr.name as driver_name, dr.phone as driver_phone,
                     CONCAT(c.firstname, " ", c.lastname) as customer_name,
-                    a.address1, a.city, a.phone as customer_phone, a.phone_mobile
+                    a.address1, a.address2, a.city, a.postcode, a.phone as customer_phone, a.phone_mobile
              FROM `' . _DB_PREFIX_ . 'yohzoo_delivery` d
              JOIN `' . _DB_PREFIX_ . 'orders` o ON d.id_order = o.id_order
              JOIN `' . _DB_PREFIX_ . 'customer` c ON o.id_customer = c.id_customer

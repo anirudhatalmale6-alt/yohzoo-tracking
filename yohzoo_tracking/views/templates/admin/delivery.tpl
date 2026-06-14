@@ -59,6 +59,7 @@
           <th>Codigo</th>
           <th>Pedido</th>
           <th>Cliente</th>
+          <th>Direccion</th>
           <th>Repartidor</th>
           <th>Estado</th>
           <th>Fecha</th>
@@ -70,7 +71,14 @@
         <tr>
           <td><strong>{$d.tracking_code}</strong></td>
           <td><a href="index.php?controller=AdminOrders&id_order={$d.id_order}&vieworder&token={Tools::getAdminTokenLite('AdminOrders')}" target="_blank">#{$d.order_reference}</a></td>
-          <td>{$d.customer_name}<br><small>{$d.city}</small></td>
+          <td>{$d.customer_name}</td>
+          <td>
+            <small>
+              {$d.address1}
+              {if $d.address2}<br>{$d.address2}{/if}
+              <br>{$d.city}{if $d.postcode}, {$d.postcode}{/if}
+            </small>
+          </td>
           <td>
               <select class="form-control input-sm" id="driver-select-{$d.id_delivery}" style="width:130px;">
                 <option value="">-- Asignar --</option>
