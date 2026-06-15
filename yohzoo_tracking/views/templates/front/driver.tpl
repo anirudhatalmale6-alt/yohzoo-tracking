@@ -123,7 +123,7 @@
 
     fetch(AJAX_URL, {
       method: 'POST',
-      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: 'action=login&code=' + encodeURIComponent(code) + '&_t=' + Date.now()
     })
       .then(function(r) { return r.json(); })
@@ -206,7 +206,7 @@
 
     fetch(AJAX_URL, {
       method: 'POST',
-      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: params
     }).then(function(r) { return r.json(); })
     .then(function(data) {
@@ -239,7 +239,7 @@
 
     fetch(AJAX_URL, {
       method: 'POST',
-      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: 'action=getDeliveries&driver_id=' + driverData.id + '&token=' + encodeURIComponent(driverData.token) + '&_t=' + Date.now()
     })
       .then(function(r) { return r.json(); })
@@ -336,7 +336,7 @@
 
     fetch(AJAX_URL, {
       method: 'POST',
-      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: params
     })
       .then(function(r) { return r.json(); })
