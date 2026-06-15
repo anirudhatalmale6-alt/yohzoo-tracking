@@ -91,8 +91,12 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+var YOHZOO_AJAX_URL = '{$ajax_url nofilter}';
+</script>
+<script>
+{literal}
 (function() {
-  var AJAX_URL = '{$ajax_url nofilter}';
+  var AJAX_URL = YOHZOO_AJAX_URL;
   var driverData = null;
   var gpsWatchId = null;
   var locationInterval = null;
@@ -384,5 +388,6 @@
     return div.innerHTML;
   }
 })();
+{/literal}
 </script>
 {/block}
