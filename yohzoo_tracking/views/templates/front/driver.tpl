@@ -59,6 +59,14 @@
 
   #driver-live-map { height: 200px; border-radius: 12px; margin-bottom: 16px; border: 1px solid #e2e8f0; display: none; }
   .map-label { font-size: 12px; color: #718096; text-align: center; margin: -8px 0 12px; }
+
+  .driver-tabs { display: flex; gap: 0; margin-bottom: 16px; border-radius: 10px; overflow: hidden; border: 2px solid #e2e8f0; }
+  .driver-tab { flex: 1; padding: 10px 8px; text-align: center; font-size: 13px; font-weight: 600; cursor: pointer; background: #f7fafc; color: #718096; border: none; transition: all 0.2s; }
+  .driver-tab.active { background: #667eea; color: #fff; }
+  .history-card { background: #f7fafc; border-radius: 12px; padding: 14px; margin-bottom: 10px; border: 1px solid #e2e8f0; }
+  .history-card .delivery-order { font-weight: 700; font-size: 15px; color: #2d3748; }
+  .history-card .history-date { font-size: 12px; color: #a0aec0; }
+  .history-card .delivery-info { font-size: 13px; color: #4a5568; margin: 3px 0; }
 </style>
 
 <div id="driver-app">
@@ -81,7 +89,14 @@
     <p class="map-label" id="map-label" style="display:none;">Tu ubicacion en tiempo real</p>
     <p id="gps-last-sent" style="display:none;font-size:11px;color:#48bb78;text-align:center;margin:-6px 0 10px;">Ultima actualizacion: --</p>
 
+    <div class="driver-tabs">
+      <button class="driver-tab active" id="tab-active" onclick="switchTab('active')">Activos</button>
+      <button class="driver-tab" id="tab-delivered" onclick="switchTab('delivered')">Entregados</button>
+      <button class="driver-tab" id="tab-cancelled" onclick="switchTab('cancelled')">Cancelados</button>
+    </div>
+
     <div id="deliveries-list"></div>
+    <div id="history-list" style="display:none;"></div>
 
     <button class="driver-logout" id="driver-logout-btn">Cerrar sesion</button>
   </div>
@@ -386,6 +401,57 @@ var YOHZOO_AJAX_URL = '{$ajax_url nofilter}';
     var div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
+  }
+
+  window.switchTab = function(tab) {
+    document.querySelectorAll('.driver-tab').forEach(function(t) { t.classList.remove('active'); });
+    document.getElementById('tab-' + tab).classList.add('active');
+
+    if (tab === 'active') {
+      document.getElementById('deliveries-list').style.display = 'block';
+      document.getElementById('history-list').style.display = 'none';
+      loadDeliveries();
+    } else {
+      document.getElementById('deliveries-list').style.display = 'none';
+      document.getElementById('history-list').style.display = 'block';
+      loadHistory(tab);
+    }
+  };
+
+  function loadHistory(filter) {
+    if (!driverData) return;
+    var container = document.getElementById('history-list');
+    container.innerHTML = '<div class="no-deliveries"><p>Cargando...</p></div>';
+
+    fetch(AJAX_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'action=getHistory&driver_id=' + driverData.id + '&token=' + encodeURIComponent(driverData.token) + '&filter=' + filter + '&_t=' + Date.now()
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (!data.success || !data.deliveries.length) {
+          container.innerHTML = '<div class="no-deliveries"><p>' + (filter === 'delivered' ? '&#9989;' : '&#10060;') + '</p>No hay pedidos ' + (filter === 'delivered' ? 'entregados' : 'cancelados') + '</div>';
+          return;
+        }
+        var html = '';
+        data.deliveries.forEach(function(d) {
+          html += '<div class="history-card">'
+            + '<div class="delivery-card-header">'
+            + '<span class="delivery-order">#' + esc(d.order_reference) + '</span>'
+            + '<span class="history-date">' + esc(d.date) + '</span>'
+            + '</div>'
+            + '<p class="delivery-info"><strong>Cliente:</strong> ' + esc(d.customer_name) + '</p>'
+            + '<p class="delivery-info"><strong>Direccion:</strong> ' + esc(d.address) + ', ' + esc(d.city) + '</p>'
+            + '<p class="delivery-info"><strong>Pago:</strong> ' + esc(d.payment_method) + '</p>'
+            + '<p class="delivery-info delivery-total"><strong>Total:</strong> ' + esc(d.total) + '</p>'
+            + '</div>';
+        });
+        container.innerHTML = html;
+      })
+      .catch(function() {
+        container.innerHTML = '<div class="no-deliveries"><p>Error de conexion</p></div>';
+      });
   }
 })();
 {/literal}

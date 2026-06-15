@@ -27,6 +27,10 @@ class Yohzoo_TrackingDriverModuleFrontController extends ModuleFrontController
             $this->ajaxGetDeliveries();
             return;
         }
+        if ($action === 'getHistory') {
+            $this->ajaxGetHistory();
+            return;
+        }
 
         header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
         header('Pragma: no-cache');
@@ -292,6 +296,55 @@ class Yohzoo_TrackingDriverModuleFrontController extends ModuleFrontController
                 'payment_method' => $order->payment,
                 'products' => $productList,
                 'estimated_minutes' => $del['estimated_minutes'],
+            ];
+        }
+
+        die(json_encode(['success' => true, 'deliveries' => $result]));
+    }
+
+    private function ajaxGetHistory()
+    {
+        header('Content-Type: application/json');
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
+
+        $driver = $this->validateDriverToken();
+        if (!$driver) {
+            die(json_encode(['success' => false, 'error' => 'No autorizado']));
+        }
+
+        $filter = pSQL(Tools::getValue('filter', 'delivered'));
+        if (!in_array($filter, ['delivered', 'cancelled'])) {
+            $filter = 'delivered';
+        }
+
+        $deliveries = Db::getInstance()->executeS(
+            'SELECT d.*, o.reference as order_reference
+             FROM `' . _DB_PREFIX_ . 'yohzoo_delivery` d
+             JOIN `' . _DB_PREFIX_ . 'orders` o ON d.id_order = o.id_order
+             WHERE d.id_driver = ' . (int) $driver['id_driver'] . '
+             AND d.status = "' . $filter . '"
+             ORDER BY d.date_upd DESC LIMIT 20'
+        );
+
+        $result = [];
+        foreach ($deliveries as $del) {
+            $order = new Order((int) $del['id_order']);
+            $address = new Address((int) $order->id_address_delivery);
+            $customer = new Customer((int) $order->id_customer);
+
+            $result[] = [
+                'id_delivery' => (int) $del['id_delivery'],
+                'order_reference' => $del['order_reference'],
+                'tracking_code' => $del['tracking_code'],
+                'status' => $del['status'],
+                'status_label' => Yohzoo_Tracking::getStatusLabel($del['status']),
+                'customer_name' => $customer->firstname . ' ' . $customer->lastname,
+                'address' => $address->address1,
+                'city' => $address->city,
+                'total' => Tools::displayPrice($order->total_paid, (int) $order->id_currency),
+                'payment_method' => $order->payment,
+                'date' => $del['status'] === 'delivered' ? date('d/m/Y H:i', strtotime($del['date_delivered'])) : date('d/m/Y H:i', strtotime($del['date_upd'])),
             ];
         }
 
