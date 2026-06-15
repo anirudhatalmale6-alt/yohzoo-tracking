@@ -48,6 +48,15 @@
 
   .driver-logout { display: block; width: 100%; padding: 12px; background: none; border: 2px solid #e2e8f0; border-radius: 10px; color: #718096; font-size: 14px; cursor: pointer; margin-top: 16px; }
 
+  .delivery-products { margin: 8px 0; padding: 8px; background: #fff; border-radius: 8px; border: 1px solid #e2e8f0; }
+  .delivery-product-item { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+  .delivery-product-item + .delivery-product-item { border-top: 1px solid #edf2f7; padding-top: 6px; }
+  .product-thumb { width: 40px; height: 40px; border-radius: 6px; object-fit: cover; flex-shrink: 0; }
+  .product-detail { display: flex; flex-direction: column; min-width: 0; }
+  .product-pname { font-size: 13px; color: #2d3748; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .product-pqty { font-size: 12px; color: #718096; }
+  .delivery-total { font-size: 15px; margin-top: 6px; padding-top: 6px; border-top: 1px solid #e2e8f0; }
+
   #driver-live-map { height: 200px; border-radius: 12px; margin-bottom: 16px; border: 1px solid #e2e8f0; display: none; }
   .map-label { font-size: 12px; color: #718096; text-align: center; margin: -8px 0 12px; }
 </style>
@@ -255,9 +264,34 @@
         + '<span class="delivery-order">#' + esc(d.order_reference) + '</span>'
         + '<span class="delivery-status-badge badge-' + d.status + '">' + esc(d.status_label) + '</span>'
         + '</div>'
-        + '<p class="delivery-info"><strong>Cliente:</strong> ' + esc(d.customer_name) + '</p>'
-        + '<p class="delivery-info"><strong>Direccion:</strong> ' + esc(d.address) + (d.address2 ? ', ' + esc(d.address2) : '') + ', ' + esc(d.city) + '</p>'
-        + '<p class="delivery-info"><strong>Total:</strong> ' + esc(d.total) + '</p>';
+        + '<p class="delivery-info"><strong>Cliente:</strong> ' + esc(d.customer_name) + '</p>';
+
+      if (d.phone) {
+        html += '<p class="delivery-info"><strong>Telefono:</strong> <a href="tel:' + esc(d.phone) + '" style="color:#667eea;text-decoration:none;">' + esc(d.phone) + '</a></p>';
+      }
+
+      html += '<p class="delivery-info"><strong>Direccion:</strong> ' + esc(d.address) + (d.address2 ? ', ' + esc(d.address2) : '') + ', ' + esc(d.city) + '</p>';
+
+      if (d.payment_method) {
+        html += '<p class="delivery-info"><strong>Pago:</strong> ' + esc(d.payment_method) + '</p>';
+      }
+
+      if (d.products && d.products.length) {
+        html += '<div class="delivery-products">';
+        d.products.forEach(function(p) {
+          html += '<div class="delivery-product-item">';
+          if (p.image) {
+            html += '<img src="' + esc(p.image) + '" alt="' + esc(p.name) + '" class="product-thumb">';
+          }
+          html += '<div class="product-detail">'
+            + '<span class="product-pname">' + esc(p.name) + '</span>'
+            + '<span class="product-pqty">x' + p.quantity + ' - ' + esc(p.price) + '</span>'
+            + '</div></div>';
+        });
+        html += '</div>';
+      }
+
+      html += '<p class="delivery-info delivery-total"><strong>Total:</strong> ' + esc(d.total) + '</p>';
 
       if (d.estimated_minutes) {
         html += '<p class="delivery-info"><strong>Tiempo est.:</strong> ~' + d.estimated_minutes + ' min</p>';

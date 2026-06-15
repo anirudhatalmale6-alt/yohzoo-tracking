@@ -239,6 +239,44 @@ class Yohzoo_TrackingDriverModuleFrontController extends ModuleFrontController
             $address = new Address((int) $order->id_address_delivery);
             $customer = new Customer((int) $order->id_customer);
 
+            $productList = [];
+            try {
+                $products = $order->getProducts();
+                if ($products) {
+                    foreach ($products as $p) {
+                        $imgUrl = '';
+                        $idProduct = (int) $p['product_id'];
+                        $idImage = 0;
+                        if (!empty($p['image']) && is_object($p['image'])) {
+                            $idImage = (int) $p['image']->id;
+                        } elseif (!empty($p['id_image'])) {
+                            $idImage = (int) $p['id_image'];
+                        }
+                        if (!$idImage) {
+                            $cover = Image::getCover($idProduct);
+                            if ($cover) {
+                                $idImage = (int) $cover['id_image'];
+                            }
+                        }
+                        if ($idImage) {
+                            $imgUrl = $this->context->link->getImageLink(
+                                $p['link_rewrite'] ?? 'product',
+                                $idProduct . '-' . $idImage,
+                                'small_default'
+                            );
+                        }
+                        $productList[] = [
+                            'name' => $p['product_name'] ?? 'Producto',
+                            'quantity' => (int) ($p['product_quantity'] ?? 1),
+                            'price' => Tools::displayPrice((float) ($p['total_price_tax_incl'] ?? $p['product_price'] ?? 0), (int) $order->id_currency),
+                            'image' => $imgUrl,
+                        ];
+                    }
+                }
+            } catch (\Exception $e) {
+                $productList = [];
+            }
+
             $result[] = [
                 'id_delivery' => (int) $del['id_delivery'],
                 'order_reference' => $del['order_reference'],
@@ -249,8 +287,10 @@ class Yohzoo_TrackingDriverModuleFrontController extends ModuleFrontController
                 'address' => $address->address1,
                 'address2' => $address->address2 ?: '',
                 'city' => $address->city,
-                'phone' => $address->phone ?: $address->phone_mobile,
+                'phone' => $address->phone_mobile ?: $address->phone,
                 'total' => Tools::displayPrice($order->total_paid, (int) $order->id_currency),
+                'payment_method' => $order->payment,
+                'products' => $productList,
                 'estimated_minutes' => $del['estimated_minutes'],
             ];
         }
