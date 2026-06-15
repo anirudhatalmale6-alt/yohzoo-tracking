@@ -209,8 +209,9 @@ class Yohzoo_TrackingDriverModuleFrontController extends ModuleFrontController
                 if (strlen($phone) === 9) {
                     $phone = '51' . $phone;
                 }
-                $msg = urlencode("Hola! Tu pedido de Yohzoo Pets ha sido entregado. Gracias por tu compra! Si tienes alguna pregunta o duda, escribenos aqui.");
-                $whatsappUrl = 'https://wa.me/' . $phone . '?text=' . $msg;
+                $deliveredTemplate = Configuration::get('YOHZOO_MSG_DELIVERED')
+                    ?: 'Hola! Tu pedido de Yohzoo Pets ha sido entregado. Gracias por tu compra! Si tienes alguna pregunta o duda, escribenos aqui.';
+                $whatsappUrl = 'https://wa.me/' . $phone . '?text=' . urlencode($deliveredTemplate);
             }
         }
 

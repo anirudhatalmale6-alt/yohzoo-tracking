@@ -197,8 +197,13 @@ class AdminYohzooDeliveryController extends ModuleAdminController
 
         $trackingUrl = $this->context->link->getModuleLink('yohzoo_tracking', 'tracking', ['code' => $delivery['tracking_code']]);
 
-        $whatsappMsg = "Hola " . $customer->firstname . "! Tu pedido de Yohzoo (#" . $delivery['tracking_code'] . ") esta en camino. "
-            . "Puedes seguirlo en tiempo real aqui: " . $trackingUrl;
+        $msgTemplate = Configuration::get('YOHZOO_MSG_TRACKING')
+            ?: 'Hola {customer_name}! Tu pedido de Yohzoo (#{tracking_code}) esta en camino. Puedes seguirlo en tiempo real aqui: {tracking_url}';
+        $whatsappMsg = str_replace(
+            ['{customer_name}', '{tracking_code}', '{tracking_url}'],
+            [$customer->firstname, $delivery['tracking_code'], $trackingUrl],
+            $msgTemplate
+        );
 
         if ($phone) {
             $phone = preg_replace('/[^0-9]/', '', $phone);
@@ -270,8 +275,9 @@ class AdminYohzooDeliveryController extends ModuleAdminController
                     if (strlen($phone) === 9) {
                         $phone = '51' . $phone;
                     }
-                    $msg = urlencode("Hola! Tu pedido de Yohzoo Pets ha sido entregado. Gracias por tu compra! Si tienes alguna pregunta o duda, escribenos aqui.");
-                    $whatsappUrl = 'https://wa.me/' . $phone . '?text=' . $msg;
+                    $deliveredTemplate = Configuration::get('YOHZOO_MSG_DELIVERED')
+                        ?: 'Hola! Tu pedido de Yohzoo Pets ha sido entregado. Gracias por tu compra! Si tienes alguna pregunta o duda, escribenos aqui.';
+                    $whatsappUrl = 'https://wa.me/' . $phone . '?text=' . urlencode($deliveredTemplate);
                 }
             }
         }

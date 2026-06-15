@@ -24,6 +24,9 @@ class Yohzoo_Tracking extends Module
 
     public function install()
     {
+        Configuration::updateValue('YOHZOO_MSG_TRACKING', 'Hola {customer_name}! Tu pedido de Yohzoo (#{tracking_code}) esta en camino. Puedes seguirlo en tiempo real aqui: {tracking_url}');
+        Configuration::updateValue('YOHZOO_MSG_DELIVERED', 'Hola! Tu pedido de Yohzoo Pets ha sido entregado. Gracias por tu compra! Si tienes alguna pregunta o duda, escribenos aqui.');
+
         return parent::install()
             && $this->installDb()
             && $this->installTab()
@@ -35,9 +38,57 @@ class Yohzoo_Tracking extends Module
 
     public function uninstall()
     {
+        Configuration::deleteByName('YOHZOO_MSG_TRACKING');
+        Configuration::deleteByName('YOHZOO_MSG_DELIVERED');
+
         return $this->uninstallDb()
             && $this->uninstallTab()
             && parent::uninstall();
+    }
+
+    public function getContent()
+    {
+        $output = '';
+
+        if (Tools::isSubmit('submitYohzooMessages')) {
+            Configuration::updateValue('YOHZOO_MSG_TRACKING', Tools::getValue('YOHZOO_MSG_TRACKING'), true);
+            Configuration::updateValue('YOHZOO_MSG_DELIVERED', Tools::getValue('YOHZOO_MSG_DELIVERED'), true);
+            $output .= $this->displayConfirmation($this->l('Mensajes actualizados correctamente'));
+        }
+
+        $defaultTracking = 'Hola {customer_name}! Tu pedido de Yohzoo (#{tracking_code}) esta en camino. Puedes seguirlo en tiempo real aqui: {tracking_url}';
+        $defaultDelivered = 'Hola! Tu pedido de Yohzoo Pets ha sido entregado. Gracias por tu compra! Si tienes alguna pregunta o duda, escribenos aqui.';
+
+        $trackingMsg = Configuration::get('YOHZOO_MSG_TRACKING') ?: $defaultTracking;
+        $deliveredMsg = Configuration::get('YOHZOO_MSG_DELIVERED') ?: $defaultDelivered;
+
+        $output .= '
+        <div class="panel">
+            <div class="panel-heading"><i class="icon-cogs"></i> Mensajes de WhatsApp</div>
+            <form method="post" action="' . $_SERVER['REQUEST_URI'] . '">
+                <div class="form-group">
+                    <label class="control-label col-lg-3">Mensaje de seguimiento (cuando se asigna repartidor)</label>
+                    <div class="col-lg-9">
+                        <textarea name="YOHZOO_MSG_TRACKING" class="form-control" rows="4">' . htmlspecialchars($trackingMsg) . '</textarea>
+                        <p class="help-block">Variables disponibles: <code>{customer_name}</code> = nombre del cliente, <code>{tracking_code}</code> = codigo de seguimiento, <code>{tracking_url}</code> = link de rastreo</p>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top:20px;">
+                    <label class="control-label col-lg-3">Mensaje de entrega completada</label>
+                    <div class="col-lg-9">
+                        <textarea name="YOHZOO_MSG_DELIVERED" class="form-control" rows="4">' . htmlspecialchars($deliveredMsg) . '</textarea>
+                        <p class="help-block">Este mensaje se envia por WhatsApp cuando el pedido se marca como entregado</p>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top:20px;">
+                    <div class="col-lg-offset-3 col-lg-9">
+                        <button type="submit" name="submitYohzooMessages" class="btn btn-primary"><i class="icon-save"></i> Guardar mensajes</button>
+                    </div>
+                </div>
+            </form>
+        </div>';
+
+        return $output;
     }
 
     private function installDb()
