@@ -282,6 +282,14 @@ class Yohzoo_TrackingDriverModuleFrontController extends ModuleFrontController
                 $productList = [];
             }
 
+            $district = '';
+            if ($address->id_state) {
+                $state = new State((int) $address->id_state);
+                if (Validate::isLoadedObject($state)) {
+                    $district = $state->name;
+                }
+            }
+
             $result[] = [
                 'id_delivery' => (int) $del['id_delivery'],
                 'order_reference' => $del['order_reference'],
@@ -291,6 +299,7 @@ class Yohzoo_TrackingDriverModuleFrontController extends ModuleFrontController
                 'customer_name' => $customer->firstname . ' ' . $customer->lastname,
                 'address' => $address->address1,
                 'address2' => $address->address2 ?: '',
+                'district' => $district,
                 'city' => $address->city,
                 'phone' => $address->phone_mobile ?: $address->phone,
                 'total' => Tools::displayPrice($order->total_paid, (int) $order->id_currency),
@@ -334,6 +343,14 @@ class Yohzoo_TrackingDriverModuleFrontController extends ModuleFrontController
             $address = new Address((int) $order->id_address_delivery);
             $customer = new Customer((int) $order->id_customer);
 
+            $district = '';
+            if ($address->id_state) {
+                $state = new State((int) $address->id_state);
+                if (Validate::isLoadedObject($state)) {
+                    $district = $state->name;
+                }
+            }
+
             $result[] = [
                 'id_delivery' => (int) $del['id_delivery'],
                 'order_reference' => $del['order_reference'],
@@ -342,6 +359,7 @@ class Yohzoo_TrackingDriverModuleFrontController extends ModuleFrontController
                 'status_label' => Yohzoo_Tracking::getStatusLabel($del['status']),
                 'customer_name' => $customer->firstname . ' ' . $customer->lastname,
                 'address' => $address->address1,
+                'district' => $district,
                 'city' => $address->city,
                 'total' => Tools::displayPrice($order->total_paid, (int) $order->id_currency),
                 'payment_method' => $order->payment,
