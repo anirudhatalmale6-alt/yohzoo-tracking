@@ -279,6 +279,12 @@ function deleteDriver(idDriver) {
     });
 }
 
+{if $view == 'deliveries'}
+setInterval(function() {
+  if (!document.hidden) location.reload();
+}, 20000);
+{/if}
+
 {if $view == 'map'}
 document.addEventListener('DOMContentLoaded', function() {
   var map = L.map('admin-live-map').setView([-12.046, -77.043], 12);

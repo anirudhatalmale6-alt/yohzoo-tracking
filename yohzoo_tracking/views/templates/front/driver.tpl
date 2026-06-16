@@ -170,14 +170,29 @@ var YOHZOO_AJAX_URL = '{$ajax_url nofilter}';
     dashboard.style.display = 'none';
   }
 
+  var deliveryInterval = null;
+
   function showDashboard() {
     loginScreen.style.display = 'none';
     dashboard.style.display = 'block';
     document.getElementById('driver-welcome').textContent = 'Hola, ' + driverData.name;
     startGPS();
     loadDeliveries();
-    setInterval(loadDeliveries, 15000);
+    deliveryInterval = setInterval(loadDeliveries, 12000);
   }
+
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden && driverData) {
+      sendLocation();
+      loadDeliveries();
+      if (!deliveryInterval) {
+        deliveryInterval = setInterval(loadDeliveries, 12000);
+      }
+      if (!gpsWatchId) {
+        startGPS();
+      }
+    }
+  });
 
   function startGPS() {
     if (!navigator.geolocation) {

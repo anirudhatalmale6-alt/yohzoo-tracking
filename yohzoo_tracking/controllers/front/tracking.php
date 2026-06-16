@@ -155,11 +155,42 @@ class Yohzoo_TrackingTrackingModuleFrontController extends ModuleFrontController
             $refTime = $delivery['date_picked'] ?: $delivery['date_assigned'];
             if ($refTime) {
                 $elapsed = (time() - strtotime($refTime)) / 60;
+                if ($elapsed > $manual * 1.5) {
+                    return null;
+                }
                 $remaining = (int) max(1, $manual - $elapsed);
                 return $remaining;
             }
             return $manual;
         }
+
+        if ($driverLocation && $address) {
+            $destLat = null;
+            $destLng = null;
+            $cityCoords = [
+                'Lima' => [-12.046, -77.043],
+            ];
+            $city = $address->city ?? '';
+            if (isset($cityCoords[$city])) {
+                $destLat = $cityCoords[$city][0];
+                $destLng = $cityCoords[$city][1];
+            }
+            if ($destLat && $destLng) {
+                $dLat = deg2rad((float)$driverLocation['latitude'] - $destLat);
+                $dLng = deg2rad((float)$driverLocation['longitude'] - $destLng);
+                $a = sin($dLat/2) * sin($dLat/2) +
+                     cos(deg2rad($destLat)) * cos(deg2rad((float)$driverLocation['latitude'])) *
+                     sin($dLng/2) * sin($dLng/2);
+                $distKm = 6371 * 2 * atan2(sqrt($a), sqrt(1-$a));
+                $roadDist = $distKm * 1.4;
+                $speedKmh = 25;
+                $etaMin = (int) ceil(($roadDist / $speedKmh) * 60);
+                if ($etaMin >= 1 && $etaMin <= 120) {
+                    return $etaMin;
+                }
+            }
+        }
+
         return null;
     }
 
