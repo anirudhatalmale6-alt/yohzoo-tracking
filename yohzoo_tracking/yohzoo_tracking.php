@@ -31,6 +31,7 @@ class Yohzoo_Tracking extends Module
             && $this->installDb()
             && $this->installTab()
             && $this->registerHook('displayHeader')
+            && $this->registerHook('displayBackOfficeHeader')
             && $this->registerHook('displayAdminOrder')
             && $this->registerHook('actionOrderStatusPostUpdate')
             && $this->registerHook('actionValidateOrder');
@@ -195,6 +196,14 @@ class Yohzoo_Tracking extends Module
             return $tab->delete();
         }
         return true;
+    }
+
+    public function hookDisplayBackOfficeHeader($params)
+    {
+        $cssFile = _PS_MODULE_DIR_ . $this->name . '/views/css/admin-mobile.css';
+        if (file_exists($cssFile)) {
+            $this->context->controller->addCSS($this->_path . 'views/css/admin-mobile.css');
+        }
     }
 
     public function hookDisplayHeader($params)

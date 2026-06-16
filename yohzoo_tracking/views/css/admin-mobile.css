@@ -1,0 +1,146 @@
+@media (max-width: 768px) {
+  /* KPI cards - horizontal scroll instead of overlap */
+  .kpis-header .kpi-container,
+  .kpis .kpi-container {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    gap: 8px;
+    padding-bottom: 8px;
+  }
+
+  .kpis-header .kpi,
+  .kpis .kpi {
+    min-width: 120px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .kpis-header .kpi .value,
+  .kpis .kpi .value {
+    font-size: 20px !important;
+  }
+
+  .kpis-header .kpi .title,
+  .kpis .kpi .title {
+    font-size: 11px !important;
+    white-space: nowrap;
+  }
+
+  .kpis-header .kpi .subtitle,
+  .kpis .kpi .subtitle {
+    font-size: 10px !important;
+  }
+
+  /* Orders table - scrollable */
+  .table-responsive-row,
+  #order_grid_table,
+  .js-grid-table {
+    display: block !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #order_grid_table table,
+  .js-grid-table table,
+  .table.order {
+    min-width: 700px !important;
+  }
+
+  /* Grid panel - remove padding */
+  .grid-card .card-body,
+  .panel .panel-body {
+    padding: 8px !important;
+  }
+
+  /* Column header filters - smaller */
+  .grid-search-row input,
+  .grid-search-row select {
+    font-size: 12px !important;
+    padding: 4px 6px !important;
+    min-width: 60px !important;
+  }
+
+  /* Action buttons */
+  .grid-search-row .btn,
+  .js-grid-reset-button,
+  .js-grid-search-button {
+    padding: 4px 8px !important;
+    font-size: 12px !important;
+  }
+
+  /* Bulk actions dropdown */
+  .js-bulk-action-btn,
+  .bulk-action-btn {
+    font-size: 12px !important;
+    padding: 6px 10px !important;
+  }
+
+  /* Page header */
+  .header-toolbar {
+    flex-wrap: wrap !important;
+    gap: 8px;
+  }
+
+  .header-toolbar h2 {
+    font-size: 18px !important;
+  }
+
+  /* Order detail page - responsive cards */
+  .order-view-page .card,
+  #orderView .panel {
+    margin-bottom: 10px !important;
+  }
+
+  .order-view-page .customer-information,
+  .order-view-page .order-addresses {
+    flex-direction: column !important;
+  }
+
+  /* Admin sidebar - already collapsible, just ensure it works */
+  .nav-bar {
+    width: 0 !important;
+    overflow: hidden;
+  }
+
+  .nav-bar.expanded {
+    width: 260px !important;
+  }
+
+  #main {
+    margin-left: 0 !important;
+    padding: 10px !important;
+  }
+
+  /* Product list in order detail */
+  .order-product-table {
+    display: block !important;
+    overflow-x: auto !important;
+  }
+
+  .order-product-table table {
+    min-width: 500px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .kpis-header .kpi,
+  .kpis .kpi {
+    min-width: 100px !important;
+    padding: 8px !important;
+  }
+
+  .kpis-header .kpi .value,
+  .kpis .kpi .value {
+    font-size: 16px !important;
+  }
+
+  #order_grid_table table,
+  .js-grid-table table {
+    min-width: 600px !important;
+  }
+
+  .header-toolbar h2 {
+    font-size: 16px !important;
+  }
+}
