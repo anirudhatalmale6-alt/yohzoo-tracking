@@ -289,7 +289,7 @@ var YOHZOO_AJAX_URL = '{$ajax_url nofilter}';
         html += '<p class="delivery-info"><strong>Telefono:</strong> <a href="tel:' + esc(d.phone) + '" style="color:#667eea;text-decoration:none;">' + esc(d.phone) + '</a></p>';
       }
 
-      html += '<p class="delivery-info"><strong>Direccion:</strong> ' + esc(d.address) + (d.address2 ? ', ' + esc(d.address2) : '') + (d.district ? ', ' + esc(d.district) : '') + ', ' + esc(d.city) + '</p>';
+      html += '<p class="delivery-info"><strong>Direccion:</strong> ' + (d.district ? esc(d.district) + ', ' : '') + esc(d.address) + (d.address2 ? ', ' + esc(d.address2) : '') + ', ' + esc(d.city) + '</p>';
 
       if (d.payment_method) {
         html += '<p class="delivery-info"><strong>Pago:</strong> ' + esc(d.payment_method) + '</p>';
@@ -442,7 +442,7 @@ var YOHZOO_AJAX_URL = '{$ajax_url nofilter}';
             + '<span class="history-date">' + esc(d.date) + '</span>'
             + '</div>'
             + '<p class="delivery-info"><strong>Cliente:</strong> ' + esc(d.customer_name) + '</p>'
-            + '<p class="delivery-info"><strong>Direccion:</strong> ' + esc(d.address) + (d.district ? ', ' + esc(d.district) : '') + ', ' + esc(d.city) + '</p>'
+            + '<p class="delivery-info"><strong>Direccion:</strong> ' + (d.district ? esc(d.district) + ', ' : '') + esc(d.address) + ', ' + esc(d.city) + '</p>'
             + '<p class="delivery-info"><strong>Pago:</strong> ' + esc(d.payment_method) + '</p>'
             + '<p class="delivery-info delivery-total"><strong>Total:</strong> ' + esc(d.total) + '</p>'
             + '</div>';
