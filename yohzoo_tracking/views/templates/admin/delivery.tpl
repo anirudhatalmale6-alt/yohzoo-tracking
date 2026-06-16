@@ -99,7 +99,8 @@
           <td>
             {if $d.customer_phone || $d.phone_mobile}
               {assign var="cphone" value=$d.customer_phone|default:$d.phone_mobile}
-              <a href="https://wa.me/51{$cphone|regex_replace:'/[^0-9]/':''}?text={('Tu pedido #'|cat:$d.tracking_code|cat:' de Yohzoo esta en camino! Rastrealo aqui: '|cat:$tracking_url|cat:'?code='|cat:$d.tracking_code)|urlencode}" target="_blank" class="btn btn-xs btn-success" title="WhatsApp">
+              {assign var="wa_text" value=$wa_msg_template|replace:'{customer_name}':$d.customer_firstname|replace:'{tracking_code}':$d.tracking_code|replace:'{tracking_url}':($tracking_url|cat:'?code='|cat:$d.tracking_code)}
+              <a href="https://wa.me/51{$cphone|regex_replace:'/[^0-9]/':''}?text={$wa_text|urlencode}" target="_blank" class="btn btn-xs btn-success" title="WhatsApp">
                 <i class="icon-comment"></i> WA
               </a>
             {/if}

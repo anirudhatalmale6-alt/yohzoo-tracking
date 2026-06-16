@@ -48,7 +48,7 @@ class AdminYohzooDeliveryController extends ModuleAdminController
 
         $deliveries = Db::getInstance()->executeS(
             'SELECT d.*, o.reference as order_reference, dr.name as driver_name, dr.phone as driver_phone,
-                    CONCAT(c.firstname, " ", c.lastname) as customer_name,
+                    c.firstname as customer_firstname, CONCAT(c.firstname, " ", c.lastname) as customer_name,
                     a.address1, a.address2, a.city, a.postcode, a.phone as customer_phone, a.phone_mobile,
                     s.name as state_name
              FROM `' . _DB_PREFIX_ . 'yohzoo_delivery` d
@@ -92,6 +92,9 @@ class AdminYohzooDeliveryController extends ModuleAdminController
         $trackingUrl = $this->context->link->getModuleLink('yohzoo_tracking', 'tracking');
         $driverAppUrl = $this->context->link->getModuleLink('yohzoo_tracking', 'driver');
 
+        $msgTracking = Configuration::get('YOHZOO_MSG_TRACKING')
+            ?: 'Hola {customer_name}! Tu pedido de Yohzoo (#{tracking_code}) esta en camino. Puedes seguirlo en tiempo real aqui: {tracking_url}';
+
         $this->context->smarty->assign([
             'deliveries' => $deliveries,
             'drivers' => $drivers,
@@ -102,6 +105,7 @@ class AdminYohzooDeliveryController extends ModuleAdminController
             'tracking_url' => $trackingUrl,
             'driver_app_url' => $driverAppUrl,
             'statuses' => ['preparing', 'ready', 'assigned', 'picked_up', 'on_the_way', 'nearby', 'delivered', 'cancelled'],
+            'wa_msg_template' => $msgTracking,
         ]);
 
         $this->content = $this->context->smarty->fetch(
