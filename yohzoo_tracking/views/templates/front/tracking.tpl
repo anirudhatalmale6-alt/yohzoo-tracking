@@ -117,5 +117,5 @@ var yohzooTrackingConfig = {
   refreshInterval: 10000
 };
 </script>
-<script src="{$urls.base_url}modules/yohzoo_tracking/views/js/tracking.js?v=4"></script>
+<script src="{$urls.base_url}modules/yohzoo_tracking/views/js/tracking.js?v=5"></script>
 {/block}

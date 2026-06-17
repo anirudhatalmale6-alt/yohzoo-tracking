@@ -118,6 +118,7 @@ var YOHZOO_AJAX_URL = '{$ajax_url nofilter}';
   var lastLat = null, lastLng = null, lastAccuracy = null;
   var driverMap = null, driverMapMarker = null, driverMapReady = false;
   var lastSendTime = 0;
+  var gpsSendCount = 0;
 
   var loginScreen = document.getElementById('driver-login-screen');
   var dashboard = document.getElementById('driver-dashboard');
@@ -183,14 +184,12 @@ var YOHZOO_AJAX_URL = '{$ajax_url nofilter}';
 
   document.addEventListener('visibilitychange', function() {
     if (!document.hidden && driverData) {
+      stopGPS();
+      startGPS();
       sendLocation();
       loadDeliveries();
-      if (!deliveryInterval) {
-        deliveryInterval = setInterval(loadDeliveries, 12000);
-      }
-      if (!gpsWatchId) {
-        startGPS();
-      }
+      if (deliveryInterval) clearInterval(deliveryInterval);
+      deliveryInterval = setInterval(loadDeliveries, 12000);
     }
   });
 
@@ -245,10 +244,11 @@ var YOHZOO_AJAX_URL = '{$ajax_url nofilter}';
     }).then(function(r) { return r.json(); })
     .then(function(data) {
       if (data.success) {
+        gpsSendCount++;
         var el = document.getElementById('gps-last-sent');
         if (el) {
           el.style.display = 'block';
-          el.textContent = 'GPS enviado: ' + new Date().toLocaleTimeString('es-PE');
+          el.textContent = 'GPS enviado: ' + new Date().toLocaleTimeString('es-PE') + ' (#' + gpsSendCount + ')';
           el.style.color = '#48bb78';
         }
       }
@@ -256,7 +256,7 @@ var YOHZOO_AJAX_URL = '{$ajax_url nofilter}';
       var el = document.getElementById('gps-last-sent');
       if (el) {
         el.style.display = 'block';
-        el.textContent = 'Error enviando GPS';
+        el.textContent = 'Error enviando GPS - reintentando...';
         el.style.color = '#e53e3e';
       }
     });

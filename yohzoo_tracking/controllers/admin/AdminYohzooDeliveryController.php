@@ -42,6 +42,9 @@ class AdminYohzooDeliveryController extends ModuleAdminController
             case 'getMapData':
                 $this->ajaxGetMapData();
                 return;
+            case 'getDeliveryList':
+                $this->ajaxGetDeliveryList();
+                return;
         }
 
         $view = Tools::getValue('view', 'deliveries');
@@ -101,6 +104,7 @@ class AdminYohzooDeliveryController extends ModuleAdminController
         $this->context->smarty->assign([
             'deliveries' => $deliveries,
             'drivers' => $drivers,
+            'drivers_json' => json_encode($drivers ?: []),
             'active_deliveries' => $activeDeliveries,
             'stats' => $stats,
             'view' => $view,
@@ -108,8 +112,10 @@ class AdminYohzooDeliveryController extends ModuleAdminController
             'tracking_url' => $trackingUrl,
             'driver_app_url' => $driverAppUrl,
             'statuses' => ['preparing', 'ready', 'assigned', 'picked_up', 'on_the_way', 'nearby', 'delivered', 'cancelled'],
+            'statuses_json' => json_encode(['preparing', 'ready', 'assigned', 'picked_up', 'on_the_way', 'nearby', 'delivered', 'cancelled']),
             'wa_msg_template' => $msgTracking,
             'wa_msg_delivered' => $msgDelivered,
+            'order_admin_token' => Tools::getAdminTokenLite('AdminOrders'),
         ]);
 
         $this->content = $this->context->smarty->fetch(
@@ -356,6 +362,78 @@ class AdminYohzooDeliveryController extends ModuleAdminController
              WHERE d.status IN ("picked_up", "on_the_way", "nearby")'
         );
 
-        die(json_encode(['success' => true, 'deliveries' => $activeDeliveries]));
+        die(json_encode(['success' => true, 'deliveries' => $activeDeliveries ?: [], 'server_time' => date('H:i:s')]));
+    }
+
+    private function ajaxGetDeliveryList()
+    {
+        header('Content-Type: application/json');
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
+
+        $filter = pSQL(Tools::getValue('filter', 'active'));
+
+        switch ($filter) {
+            case 'delivered':
+                $where = 'd.status = "delivered"';
+                $order = 'd.date_delivered DESC';
+                $limit = 50;
+                break;
+            case 'cancelled':
+                $where = 'd.status = "cancelled"';
+                $order = 'd.date_upd DESC';
+                $limit = 50;
+                break;
+            default:
+                $where = 'd.status NOT IN ("delivered", "cancelled")';
+                $order = 'd.date_add DESC';
+                $limit = 100;
+                break;
+        }
+
+        $deliveries = Db::getInstance()->executeS(
+            'SELECT d.*, o.reference as order_reference, dr.name as driver_name, dr.phone as driver_phone,
+                    c.firstname as customer_firstname, CONCAT(c.firstname, " ", c.lastname) as customer_name,
+                    a.address1, a.address2, a.city, a.postcode, a.phone as customer_phone, a.phone_mobile,
+                    s.name as state_name
+             FROM `' . _DB_PREFIX_ . 'yohzoo_delivery` d
+             JOIN `' . _DB_PREFIX_ . 'orders` o ON d.id_order = o.id_order
+             JOIN `' . _DB_PREFIX_ . 'customer` c ON o.id_customer = c.id_customer
+             JOIN `' . _DB_PREFIX_ . 'address` a ON o.id_address_delivery = a.id_address
+             LEFT JOIN `' . _DB_PREFIX_ . 'yohzoo_driver` dr ON d.id_driver = dr.id_driver
+             LEFT JOIN `' . _DB_PREFIX_ . 'state` s ON a.id_state = s.id_state
+             WHERE ' . $where . '
+             ORDER BY ' . $order . ' LIMIT ' . $limit
+        );
+
+        $stats = [
+            'active' => (int) Db::getInstance()->getValue(
+                'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'yohzoo_delivery`
+                 WHERE status NOT IN ("delivered", "cancelled")'
+            ),
+            'delivered_today' => (int) Db::getInstance()->getValue(
+                'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'yohzoo_delivery`
+                 WHERE status = "delivered" AND DATE(date_delivered) = CURDATE()'
+            ),
+            'total_today' => (int) Db::getInstance()->getValue(
+                'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'yohzoo_delivery`
+                 WHERE DATE(date_add) = CURDATE()'
+            ),
+            'delivered_total' => (int) Db::getInstance()->getValue(
+                'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'yohzoo_delivery`
+                 WHERE status = "delivered"'
+            ),
+            'cancelled_total' => (int) Db::getInstance()->getValue(
+                'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'yohzoo_delivery`
+                 WHERE status = "cancelled"'
+            ),
+        ];
+
+        die(json_encode([
+            'success' => true,
+            'deliveries' => $deliveries ?: [],
+            'stats' => $stats,
+            'server_time' => date('H:i:s'),
+        ]));
     }
 }

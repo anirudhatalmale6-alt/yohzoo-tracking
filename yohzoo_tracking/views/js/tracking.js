@@ -174,7 +174,14 @@ document.addEventListener('DOMContentLoaded', function() {
     map.panTo([location.lat, location.lng]);
 
     var updatedEl = document.getElementById('map-updated');
-    updatedEl.textContent = 'Actualizado: ' + new Date().toLocaleTimeString('es-PE');
+    var timeStr = new Date().toLocaleTimeString('es-PE');
+    if (location.gps_time) {
+      updatedEl.textContent = 'GPS del repartidor: ' + location.gps_time + ' | Consultado: ' + timeStr;
+    } else {
+      updatedEl.textContent = 'Actualizado: ' + timeStr;
+    }
+    updatedEl.style.color = '#48bb78';
+    setTimeout(function() { updatedEl.style.color = '#a0aec0'; }, 2000);
   }
 
   function renderTimeline(timeline) {

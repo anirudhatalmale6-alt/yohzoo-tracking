@@ -70,7 +70,7 @@ class Yohzoo_TrackingTrackingModuleFrontController extends ModuleFrontController
             $driverLocation = null;
             if ($delivery['id_driver'] && in_array($delivery['status'], ['picked_up', 'on_the_way', 'nearby'])) {
                 $driverLocation = Db::getInstance()->getRow(
-                    'SELECT latitude, longitude, accuracy FROM `' . _DB_PREFIX_ . 'yohzoo_driver_location` WHERE id_driver = ' . (int) $delivery['id_driver'] . ' ORDER BY id_location DESC'
+                    'SELECT latitude, longitude, accuracy, date_add FROM `' . _DB_PREFIX_ . 'yohzoo_driver_location` WHERE id_driver = ' . (int) $delivery['id_driver'] . ' ORDER BY id_location DESC LIMIT 1'
                 );
             }
 
@@ -138,6 +138,7 @@ class Yohzoo_TrackingTrackingModuleFrontController extends ModuleFrontController
                 'driver_location' => $driverLocation ? [
                     'lat' => (float) $driverLocation['latitude'],
                     'lng' => (float) $driverLocation['longitude'],
+                    'gps_time' => date('H:i:s', strtotime($driverLocation['date_add'])),
                     'updated' => date('Y-m-d H:i:s'),
                 ] : null,
             ];
