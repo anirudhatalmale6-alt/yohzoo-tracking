@@ -100,8 +100,12 @@
             {if $d.customer_phone || $d.phone_mobile}
               {assign var="cphone" value=$d.customer_phone|default:$d.phone_mobile}
               {assign var="wa_text" value=$wa_msg_template|replace:'{customer_name}':$d.customer_firstname|replace:'{tracking_code}':$d.tracking_code|replace:'{tracking_url}':($tracking_url|cat:'?code='|cat:$d.tracking_code)}
-              <a href="https://wa.me/51{$cphone|regex_replace:'/[^0-9]/':''}?text={$wa_text|urlencode}" target="_blank" class="btn btn-xs btn-success" title="WhatsApp">
+              <a href="https://wa.me/51{$cphone|regex_replace:'/[^0-9]/':''}?text={$wa_text|urlencode}" target="_blank" class="btn btn-xs btn-success" title="Enviar tracking por WhatsApp">
                 <i class="icon-comment"></i> WA
+              </a>
+              {assign var="wa_delivered" value=$wa_msg_delivered|replace:'{customer_name}':$d.customer_firstname|replace:'{tracking_code}':$d.tracking_code}
+              <a href="https://wa.me/51{$cphone|regex_replace:'/[^0-9]/':''}?text={$wa_delivered|urlencode}" target="_blank" class="btn btn-xs btn-warning" title="Enviar mensaje de entrega por WhatsApp" style="margin-left:2px;">
+                <i class="icon-ok"></i> WA
               </a>
             {/if}
             <a href="{$tracking_url}?code={$d.tracking_code}" target="_blank" class="btn btn-xs btn-info" title="Ver tracking">
@@ -232,9 +236,6 @@ function updateStatus(idDelivery, status) {
     .then(function(r) { return r.json(); })
     .then(function(data) {
       if (data.success) {
-        if (data.whatsapp_url && confirm('Entrega marcada como entregada! Enviar WhatsApp al cliente?')) {
-          window.open(data.whatsapp_url, '_blank');
-        }
         if (status === 'delivered') location.reload();
       } else {
         alert(data.error);

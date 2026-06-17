@@ -194,28 +194,7 @@ class Yohzoo_TrackingDriverModuleFrontController extends ModuleFrontController
             'date_add' => date('Y-m-d H:i:s'),
         ]);
 
-        $whatsappUrl = null;
-        if ($status === 'delivered') {
-            $order = new Order((int) $delivery['id_order']);
-            $deliveredState = Configuration::get('PS_OS_DELIVERED');
-            if ($deliveredState) {
-                $order->setCurrentState((int) $deliveredState);
-            }
-
-            $address = new Address((int) $order->id_address_delivery);
-            $phone = $address->phone_mobile ?: $address->phone;
-            if ($phone) {
-                $phone = preg_replace('/[^0-9]/', '', $phone);
-                if (strlen($phone) === 9) {
-                    $phone = '51' . $phone;
-                }
-                $deliveredTemplate = Configuration::get('YOHZOO_MSG_DELIVERED')
-                    ?: 'Hola! Tu pedido de Yohzoo Pets ha sido entregado. Gracias por tu compra! Si tienes alguna pregunta o duda, escribenos aqui.';
-                $whatsappUrl = 'https://wa.me/' . $phone . '?text=' . urlencode($deliveredTemplate);
-            }
-        }
-
-        die(json_encode(['success' => true, 'status_label' => Yohzoo_Tracking::getStatusLabel($status), 'whatsapp_url' => $whatsappUrl]));
+        die(json_encode(['success' => true, 'status_label' => Yohzoo_Tracking::getStatusLabel($status)]));
     }
 
     private function ajaxGetDeliveries()

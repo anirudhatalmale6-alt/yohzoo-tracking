@@ -376,9 +376,6 @@ var YOHZOO_AJAX_URL = '{$ajax_url nofilter}';
       .then(function(r) { return r.json(); })
       .then(function(data) {
         if (data.success) {
-          if (data.whatsapp_url) {
-            window.open(data.whatsapp_url, '_blank');
-          }
           loadDeliveries();
         } else {
           alert(data.error || 'Error');

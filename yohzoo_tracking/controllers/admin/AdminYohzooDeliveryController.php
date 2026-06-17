@@ -95,6 +95,9 @@ class AdminYohzooDeliveryController extends ModuleAdminController
         $msgTracking = Configuration::get('YOHZOO_MSG_TRACKING')
             ?: 'Hola {customer_name}! Tu pedido de Yohzoo (#{tracking_code}) esta en camino. Puedes seguirlo en tiempo real aqui: {tracking_url}';
 
+        $msgDelivered = Configuration::get('YOHZOO_MSG_DELIVERED')
+            ?: 'Hola! Tu pedido de Yohzoo Pets ha sido entregado. Gracias por tu compra! Si tienes alguna pregunta o duda, escribenos aqui.';
+
         $this->context->smarty->assign([
             'deliveries' => $deliveries,
             'drivers' => $drivers,
@@ -106,6 +109,7 @@ class AdminYohzooDeliveryController extends ModuleAdminController
             'driver_app_url' => $driverAppUrl,
             'statuses' => ['preparing', 'ready', 'assigned', 'picked_up', 'on_the_way', 'nearby', 'delivered', 'cancelled'],
             'wa_msg_template' => $msgTracking,
+            'wa_msg_delivered' => $msgDelivered,
         ]);
 
         $this->content = $this->context->smarty->fetch(
@@ -256,37 +260,7 @@ class AdminYohzooDeliveryController extends ModuleAdminController
             'date_add' => date('Y-m-d H:i:s'),
         ]);
 
-        $whatsappUrl = null;
-        if ($status === 'delivered') {
-            $delivery = Db::getInstance()->getRow(
-                'SELECT d.*, o.id_customer, o.id_address_delivery
-                 FROM `' . _DB_PREFIX_ . 'yohzoo_delivery` d
-                 JOIN `' . _DB_PREFIX_ . 'orders` o ON d.id_order = o.id_order
-                 WHERE d.id_delivery = ' . $idDelivery
-            );
-
-            if ($delivery) {
-                $order = new Order((int) $delivery['id_order']);
-                $deliveredState = Configuration::get('PS_OS_DELIVERED');
-                if ($deliveredState) {
-                    $order->setCurrentState((int) $deliveredState);
-                }
-
-                $address = new Address((int) $delivery['id_address_delivery']);
-                $phone = $address->phone_mobile ?: $address->phone;
-                if ($phone) {
-                    $phone = preg_replace('/[^0-9]/', '', $phone);
-                    if (strlen($phone) === 9) {
-                        $phone = '51' . $phone;
-                    }
-                    $deliveredTemplate = Configuration::get('YOHZOO_MSG_DELIVERED')
-                        ?: 'Hola! Tu pedido de Yohzoo Pets ha sido entregado. Gracias por tu compra! Si tienes alguna pregunta o duda, escribenos aqui.';
-                    $whatsappUrl = 'https://wa.me/' . $phone . '?text=' . urlencode($deliveredTemplate);
-                }
-            }
-        }
-
-        die(json_encode(['success' => true, 'whatsapp_url' => $whatsappUrl]));
+        die(json_encode(['success' => true]));
     }
 
     private function ajaxCreateDriver()
