@@ -151,13 +151,17 @@ document.addEventListener('DOMContentLoaded', function() {
     renderProducts(data.products, data.order_total);
   }
 
+  var lastMapLat = null, lastMapLng = null;
+
   function renderMap(location) {
     if (!map) {
-      map = L.map('tracking-map').setView([location.lat, location.lng], 15);
+      map = L.map('tracking-map').setView([location.lat, location.lng], 16);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap'
       }).addTo(map);
     }
+
+    var moved = lastMapLat !== null && (Math.abs(location.lat - lastMapLat) > 0.00005 || Math.abs(location.lng - lastMapLng) > 0.00005);
 
     if (driverMarker) {
       driverMarker.setLatLng([location.lat, location.lng]);
@@ -171,17 +175,23 @@ document.addEventListener('DOMContentLoaded', function() {
       driverMarker = L.marker([location.lat, location.lng], {icon: icon}).addTo(map);
     }
 
-    map.panTo([location.lat, location.lng]);
+    map.setView([location.lat, location.lng], map.getZoom(), {animate: true, duration: 1});
+
+    lastMapLat = location.lat;
+    lastMapLng = location.lng;
 
     var updatedEl = document.getElementById('map-updated');
     var timeStr = new Date().toLocaleTimeString('es-PE');
+    var coordStr = location.lat.toFixed(5) + ', ' + location.lng.toFixed(5);
     if (location.gps_time) {
-      updatedEl.textContent = 'GPS del repartidor: ' + location.gps_time + ' | Consultado: ' + timeStr;
+      updatedEl.textContent = 'GPS: ' + location.gps_time + ' | Pos: ' + coordStr + (moved ? ' (movido)' : '') + ' | ' + timeStr;
     } else {
-      updatedEl.textContent = 'Actualizado: ' + timeStr;
+      updatedEl.textContent = 'Pos: ' + coordStr + ' | ' + timeStr;
     }
-    updatedEl.style.color = '#48bb78';
-    setTimeout(function() { updatedEl.style.color = '#a0aec0'; }, 2000);
+    updatedEl.style.color = moved ? '#48bb78' : '#a0aec0';
+    if (moved) {
+      setTimeout(function() { updatedEl.style.color = '#a0aec0'; }, 3000);
+    }
   }
 
   function renderTimeline(timeline) {
