@@ -135,7 +135,7 @@ class Yohzoo_TrackingDriverModuleFrontController extends ModuleFrontController
                  SELECT id_location FROM (
                      SELECT id_location FROM `' . _DB_PREFIX_ . 'yohzoo_driver_location`
                      WHERE id_driver = ' . (int) $driver['id_driver'] . '
-                     ORDER BY date_add DESC LIMIT 100
+                     ORDER BY `date_add` DESC LIMIT 100
                  ) tmp
              )'
         );
