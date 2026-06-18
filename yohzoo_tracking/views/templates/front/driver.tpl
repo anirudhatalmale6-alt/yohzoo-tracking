@@ -115,10 +115,24 @@ var YOHZOO_AJAX_URL = '{$ajax_url nofilter}';
   var driverData = null;
   var gpsWatchId = null;
   var locationInterval = null;
+  var gpsWatchdog = null;
   var lastLat = null, lastLng = null, lastAccuracy = null;
   var driverMap = null, driverMapMarker = null, driverMapReady = false;
   var lastSendTime = 0;
+  var lastGPSTime = 0;
   var gpsSendCount = 0;
+  var wakeLock = null;
+
+  function requestWakeLock() {
+    if (!('wakeLock' in navigator)) return;
+    navigator.wakeLock.request('screen').then(function(wl) {
+      wakeLock = wl;
+      wakeLock.addEventListener('release', function() {
+        wakeLock = null;
+        if (driverData) requestWakeLock();
+      });
+    }).catch(function() {});
+  }
 
   var loginScreen = document.getElementById('driver-login-screen');
   var dashboard = document.getElementById('driver-dashboard');
@@ -167,6 +181,8 @@ var YOHZOO_AJAX_URL = '{$ajax_url nofilter}';
     driverData = null;
     sessionStorage.removeItem('yohzoo_driver');
     stopGPS();
+    if (gpsWatchdog) { clearInterval(gpsWatchdog); gpsWatchdog = null; }
+    if (wakeLock) { wakeLock.release(); wakeLock = null; }
     loginScreen.style.display = 'block';
     dashboard.style.display = 'none';
   }
@@ -177,6 +193,7 @@ var YOHZOO_AJAX_URL = '{$ajax_url nofilter}';
     loginScreen.style.display = 'none';
     dashboard.style.display = 'block';
     document.getElementById('driver-welcome').textContent = 'Hola, ' + driverData.name;
+    requestWakeLock();
     startGPS();
     loadDeliveries();
     deliveryInterval = setInterval(loadDeliveries, 12000);
@@ -193,6 +210,16 @@ var YOHZOO_AJAX_URL = '{$ajax_url nofilter}';
     }
   });
 
+  function onGPSPosition(pos) {
+    lastLat = pos.coords.latitude;
+    lastLng = pos.coords.longitude;
+    lastAccuracy = pos.coords.accuracy;
+    lastGPSTime = Date.now();
+    updateGPSStatus(true);
+    updateDriverMap(lastLat, lastLng);
+    sendLocation();
+  }
+
   function startGPS() {
     if (!navigator.geolocation) {
       updateGPSStatus(false);
@@ -200,32 +227,34 @@ var YOHZOO_AJAX_URL = '{$ajax_url nofilter}';
     }
 
     gpsWatchId = navigator.geolocation.watchPosition(
-      function(pos) {
-        lastLat = pos.coords.latitude;
-        lastLng = pos.coords.longitude;
-        lastAccuracy = pos.coords.accuracy;
-        updateGPSStatus(true);
-        updateDriverMap(lastLat, lastLng);
-        sendLocation();
-      },
+      onGPSPosition,
       function() { updateGPSStatus(false); },
       { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
     );
 
     locationInterval = setInterval(function() {
       navigator.geolocation.getCurrentPosition(
-        function(pos) {
-          lastLat = pos.coords.latitude;
-          lastLng = pos.coords.longitude;
-          lastAccuracy = pos.coords.accuracy;
-          updateGPSStatus(true);
-          updateDriverMap(lastLat, lastLng);
-          sendLocation();
-        },
+        onGPSPosition,
         function() {},
         { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
       );
     }, 10000);
+
+    if (gpsWatchdog) clearInterval(gpsWatchdog);
+    gpsWatchdog = setInterval(function() {
+      var elapsed = Date.now() - lastGPSTime;
+      if (elapsed > 30000 && driverData) {
+        var el = document.getElementById('gps-last-sent');
+        if (el) {
+          el.style.display = 'block';
+          el.textContent = 'GPS detenido - reiniciando...';
+          el.style.color = '#e53e3e';
+        }
+        stopGPS();
+        startGPS();
+        requestWakeLock();
+      }
+    }, 15000);
   }
 
   function stopGPS() {
