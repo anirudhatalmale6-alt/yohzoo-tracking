@@ -209,10 +209,23 @@ var YOHZOO_AJAX_URL = '{$ajax_url nofilter}';
         sendLocation();
       },
       function() { updateGPSStatus(false); },
-      { enableHighAccuracy: true, maximumAge: 5000 }
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
     );
 
-    locationInterval = setInterval(sendLocation, 10000);
+    locationInterval = setInterval(function() {
+      navigator.geolocation.getCurrentPosition(
+        function(pos) {
+          lastLat = pos.coords.latitude;
+          lastLng = pos.coords.longitude;
+          lastAccuracy = pos.coords.accuracy;
+          updateGPSStatus(true);
+          updateDriverMap(lastLat, lastLng);
+          sendLocation();
+        },
+        function() {},
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
+      );
+    }, 10000);
   }
 
   function stopGPS() {
