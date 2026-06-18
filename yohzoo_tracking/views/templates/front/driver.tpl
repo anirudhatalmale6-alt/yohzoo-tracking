@@ -88,6 +88,7 @@
     <div id="driver-live-map"></div>
     <p class="map-label" id="map-label" style="display:none;">Tu ubicacion en tiempo real</p>
     <p id="gps-last-sent" style="display:none;font-size:11px;color:#48bb78;text-align:center;margin:-6px 0 10px;">Ultima actualizacion: --</p>
+    <p id="gps-coords" style="display:none;font-size:11px;color:#718096;text-align:center;margin:-6px 0 10px;"></p>
 
     <div class="driver-tabs">
       <button class="driver-tab active" id="tab-active" onclick="switchTab('active')">Activos</button>
@@ -210,13 +211,28 @@ var YOHZOO_AJAX_URL = '{$ajax_url nofilter}';
     }
   });
 
+  var prevSentLat = null, prevSentLng = null;
+
   function onGPSPosition(pos) {
-    lastLat = pos.coords.latitude;
-    lastLng = pos.coords.longitude;
+    var newLat = pos.coords.latitude;
+    var newLng = pos.coords.longitude;
     lastAccuracy = pos.coords.accuracy;
     lastGPSTime = Date.now();
+
+    var moved = lastLat !== null && (Math.abs(newLat - lastLat) > 0.00003 || Math.abs(newLng - lastLng) > 0.00003);
+    lastLat = newLat;
+    lastLng = newLng;
+
     updateGPSStatus(true);
     updateDriverMap(lastLat, lastLng);
+
+    var coordEl = document.getElementById('gps-coords');
+    if (coordEl) {
+      coordEl.style.display = 'block';
+      coordEl.textContent = lastLat.toFixed(6) + ', ' + lastLng.toFixed(6) + ' (acc: ' + lastAccuracy.toFixed(0) + 'm)' + (moved ? ' MOVIDO' : '');
+      coordEl.style.color = moved ? '#48bb78' : '#718096';
+    }
+
     sendLocation();
   }
 
