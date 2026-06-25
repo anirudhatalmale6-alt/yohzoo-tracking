@@ -87,6 +87,7 @@
 
     <div id="driver-live-map"></div>
     <p class="map-label" id="map-label" style="display:none;">Tu ubicacion en tiempo real</p>
+    <div id="bg-warning" style="display:none;background:#fefcbf;border:1px solid #ecc94b;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#744210;text-align:center;">Manten esta pantalla abierta para GPS continuo. No minimices el navegador.</div>
     <p id="gps-last-sent" style="display:none;font-size:11px;color:#48bb78;text-align:center;margin:-6px 0 10px;">Ultima actualizacion: --</p>
     <p id="gps-coords" style="display:none;font-size:11px;color:#718096;text-align:center;margin:-6px 0 10px;"></p>
 
@@ -123,6 +124,8 @@ var YOHZOO_AJAX_URL = '{$ajax_url nofilter}';
   var lastGPSTime = 0;
   var gpsSendCount = 0;
   var wakeLock = null;
+  var audioCtx = null;
+  var audioKeepAlive = null;
 
   function requestWakeLock() {
     if (!('wakeLock' in navigator)) return;
@@ -133,6 +136,32 @@ var YOHZOO_AJAX_URL = '{$ajax_url nofilter}';
         if (driverData) requestWakeLock();
       });
     }).catch(function() {});
+  }
+
+  function startAudioKeepAlive() {
+    if (audioCtx) return;
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      var oscillator = audioCtx.createOscillator();
+      var gain = audioCtx.createGain();
+      gain.gain.value = 0.001;
+      oscillator.frequency.value = 1;
+      oscillator.connect(gain);
+      gain.connect(audioCtx.destination);
+      oscillator.start();
+      audioKeepAlive = oscillator;
+    } catch(e) {}
+  }
+
+  function stopAudioKeepAlive() {
+    if (audioKeepAlive) {
+      try { audioKeepAlive.stop(); } catch(e) {}
+      audioKeepAlive = null;
+    }
+    if (audioCtx) {
+      try { audioCtx.close(); } catch(e) {}
+      audioCtx = null;
+    }
   }
 
   var loginScreen = document.getElementById('driver-login-screen');
@@ -184,6 +213,7 @@ var YOHZOO_AJAX_URL = '{$ajax_url nofilter}';
     stopGPS();
     if (gpsWatchdog) { clearInterval(gpsWatchdog); gpsWatchdog = null; }
     if (wakeLock) { wakeLock.release(); wakeLock = null; }
+    stopAudioKeepAlive();
     loginScreen.style.display = 'block';
     dashboard.style.display = 'none';
   }
@@ -194,7 +224,9 @@ var YOHZOO_AJAX_URL = '{$ajax_url nofilter}';
     loginScreen.style.display = 'none';
     dashboard.style.display = 'block';
     document.getElementById('driver-welcome').textContent = 'Hola, ' + driverData.name;
+    document.getElementById('bg-warning').style.display = 'block';
     requestWakeLock();
+    startAudioKeepAlive();
     startGPS();
     loadDeliveries();
     deliveryInterval = setInterval(loadDeliveries, 12000);
@@ -202,6 +234,10 @@ var YOHZOO_AJAX_URL = '{$ajax_url nofilter}';
 
   document.addEventListener('visibilitychange', function() {
     if (!document.hidden && driverData) {
+      requestWakeLock();
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume().catch(function(){});
+      }
       stopGPS();
       startGPS();
       sendLocation();
