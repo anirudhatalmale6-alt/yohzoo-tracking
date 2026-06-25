@@ -87,7 +87,25 @@
 
     <div id="driver-live-map"></div>
     <p class="map-label" id="map-label" style="display:none;">Tu ubicacion en tiempo real</p>
-    <div id="bg-warning" style="display:none;background:#fefcbf;border:1px solid #ecc94b;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#744210;text-align:center;">Manten esta pantalla abierta para GPS continuo. No minimices el navegador.</div>
+    <div id="bg-warning" style="display:none;background:#fefcbf;border:1px solid #ecc94b;border-radius:8px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#744210;">
+      <div style="text-align:center;font-weight:600;margin-bottom:4px;">Para GPS continuo, usa pantalla dividida</div>
+      <div style="text-align:center;margin-bottom:6px;">Asi puedes usar otras apps sin perder el GPS</div>
+      <div id="splitscreen-toggle" style="text-align:center;cursor:pointer;color:#667eea;font-weight:600;font-size:13px;">Ver instrucciones &#9660;</div>
+      <div id="splitscreen-instructions" style="display:none;margin-top:8px;text-align:left;background:#fff;border-radius:8px;padding:12px;border:1px solid #ecc94b;">
+        <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#2d3748;">Android - Pantalla dividida:</div>
+        <div style="margin-bottom:4px;">1. Abre esta pagina en Chrome</div>
+        <div style="margin-bottom:4px;">2. Toca el boton de apps recientes (cuadrado)</div>
+        <div style="margin-bottom:4px;">3. Manten presionado el icono de Chrome arriba</div>
+        <div style="margin-bottom:4px;">4. Selecciona "Abrir en pantalla dividida"</div>
+        <div style="margin-bottom:4px;">5. Elige la otra app para la mitad inferior</div>
+        <div style="margin-bottom:10px;">6. El GPS seguira activo mientras Chrome este visible</div>
+        <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#2d3748;">iPhone - Picture in Picture:</div>
+        <div style="margin-bottom:4px;">1. Abre esta pagina en Safari</div>
+        <div style="margin-bottom:4px;">2. Manten Safari abierto (no lo cierres)</div>
+        <div style="margin-bottom:8px;">3. Regresa al navegador cada 2-3 minutos para reactivar</div>
+        <div style="font-size:11px;color:#a0aec0;text-align:center;border-top:1px solid #edf2f7;padding-top:8px;">La pantalla dividida es la mejor opcion para GPS continuo</div>
+      </div>
+    </div>
     <p id="gps-last-sent" style="display:none;font-size:11px;color:#48bb78;text-align:center;margin:-6px 0 10px;">Ultima actualizacion: --</p>
     <p id="gps-coords" style="display:none;font-size:11px;color:#718096;text-align:center;margin:-6px 0 10px;"></p>
 
@@ -172,6 +190,18 @@ var YOHZOO_AJAX_URL = '{$ajax_url nofilter}';
     if (e.key === 'Enter') doLogin();
   });
   document.getElementById('driver-logout-btn').addEventListener('click', doLogout);
+
+  document.getElementById('splitscreen-toggle').addEventListener('click', function() {
+    var inst = document.getElementById('splitscreen-instructions');
+    var tog = document.getElementById('splitscreen-toggle');
+    if (inst.style.display === 'none') {
+      inst.style.display = 'block';
+      tog.innerHTML = 'Ocultar instrucciones &#9650;';
+    } else {
+      inst.style.display = 'none';
+      tog.innerHTML = 'Ver instrucciones &#9660;';
+    }
+  });
 
   var saved = sessionStorage.getItem('yohzoo_driver');
   if (saved) {
